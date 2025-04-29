@@ -51,7 +51,7 @@ for con in conv:
 
 
 print("Pairs:", len(pairs))
-pairs = pairs[:10000] #für testlauf
+# pairs = pairs[:10000] #für testlauf
 
 
 # WordPiece tokenizer
