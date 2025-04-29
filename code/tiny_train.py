@@ -1,6 +1,9 @@
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, Trainer, TrainingArguments
 from datasets import load_dataset
 import torch
+import time
+from pathlib import Path
+
 
 # Modell & Tokenizer laden
 model_name = "prajjwal1/bert-tiny"  # TinyBERT alternative
@@ -11,33 +14,6 @@ model = AutoModelForSequenceClassification.from_pretrained(model_name, num_label
 # fügt wahrscheinlich zum model hinzu:
 # - dense layer mit aktivierung -> Vorhersage zur Klasse
 # - soft-max (wähle Klasse mit höchster Wahrscheinlichkeit)
-
-model.save_pretrained("../models/tinybert_saved_model")
-tokenizer.save_pretrained("../models/tinybert_saved_model")
-
-dummy_input = tokenizer(
-    "This is a dummy input for ONNX export.",
-    return_tensors="pt",
-    padding="max_length",
-    max_length=128,
-    truncation=True,
-)
-
-# Export nach ONNX
-onnx_program = torch.onnx.export(
-    model,
-    (dummy_input["input_ids"], dummy_input["attention_mask"]),
-    "../models/model_before_train.onnx",
-    input_names=["input_ids", "attention_mask"],
-    output_names=["logits"],
-    dynamic_axes={
-        "input_ids": {0: "batch_size"},
-        "attention_mask": {0: "batch_size"},
-        "logits": {0: "batch_size"}
-    },
-    opset_version=17,
-    do_constant_folding=True
-)
 
 
 
@@ -54,7 +30,7 @@ tokenized_datasets = dataset.map(tokenize_function, batched=True)
 
 # Trainings-Argumente festlegen
 training_args = TrainingArguments(
-    output_dir="./tinybert_results",
+    output_dir="../tinybert_results",
     do_train=True,
     do_eval=True,
     per_device_train_batch_size=16,
@@ -81,37 +57,11 @@ trainer = Trainer(
 # Training starten
 trainer.train()
 
-model.save_pretrained("./tinybert_saved_model")
-tokenizer.save_pretrained("./tinybert_saved_model")
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = model.to(device)
 
-dummy_input = tokenizer(
-    "This is a dummy input for ONNX export.",
-    return_tensors="pt",
-    padding="max_length",
-    max_length=128,
-    truncation=True,
-)
-dummy_input = {k: v.to(device) for k, v in dummy_input.items()}
 
-model.eval().to(device)
-dummy_input = {k: v.to(device) for k, v in dummy_input.items()}
-
-# Export nach ONNX
-torch.onnx.export(
-    model,                                 # Modell
-    (dummy_input["input_ids"], dummy_input["attention_mask"]),  # Eingaben
-    "../models/tinybert_post_training.onnx",                     # Output-Pfad
-    input_names=["input_ids", "attention_mask"],
-    output_names=["logits"],
-    dynamic_axes={"input_ids": {0: "batch_size"}, 
-                  "attention_mask": {0: "batch_size"},
-                  "logits": {0: "batch_size"}},
-    opset_version=17,
-)
-
-
-# dvc projekt (init, yaml file ...)
-# quantisierung
-
+model_dir = Path(__file__).resolve().parent.parent / "models" / "tinybert_saved_model"
+model.save_pretrained(model_dir)
+tokenizer.save_pretrained(model_dir)
+print("Model saved to:", model_dir)

@@ -1,0 +1,48 @@
+schema: '2.0'
+stages:
+  train:
+    cmd: python code/tiny_train.py
+    deps:
+    - path: code/bert_dataset.py
+      hash: md5
+      md5: dea1558277217589a96f17d0b478ac95
+      size: 17999
+    - path: code/tiny_train.py
+      hash: md5
+      md5: 74b1e871773dae2c4b7d49690efe89c1
+      size: 2129
+    outs:
+    - path: models/tinybert_saved_model
+      hash: md5
+      md5: 0d4d42e2859f783d9d25c537ecbdc6ce.dir
+      size: 18495514
+      nfiles: 6
+  export:
+    cmd: python code/export.py
+    deps:
+    - path: code/export.py
+      hash: md5
+      md5: 89ff905203c99169276128732b1a2e45
+      size: 1293
+    - path: models/tinybert_saved_model
+      hash: md5
+      md5: 0d4d42e2859f783d9d25c537ecbdc6ce.dir
+      size: 18495514
+      nfiles: 6
+    outs:
+    - path: models/tinybert_post_training.onnx
+      hash: md5
+      md5: 946df3a865dfd645c3f8137a79e5008c
+      size: 17603568
+  evaluate:
+    cmd: python code/evaluate_model.py
+    deps:
+    - path: code/evaluate_model.py
+      hash: md5
+      md5: b9e119425b1b40a77b86fe3504a265b8
+      size: 2012
+    - path: models/tinybert_saved_model
+      hash: md5
+      md5: 0d4d42e2859f783d9d25c537ecbdc6ce.dir
+      size: 18495514
+      nfiles: 6

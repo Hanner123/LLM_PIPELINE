@@ -1,0 +1,20 @@
+stages:
+  train:
+    cmd: python code/tiny_train.py
+    deps:
+      - code/tiny_train.py
+      - code/bert_dataset.py
+    outs:
+      - models/tinybert_saved_model
+  evaluate:
+    cmd: python code/evaluate_model.py
+    deps:
+      - code/evaluate_model.py
+      - models/tinybert_saved_model
+  export:
+    cmd: python code/export.py
+    deps:
+      - code/export.py
+      - models/tinybert_saved_model
+    outs: 
+      - models/tinybert_post_training.onnx
