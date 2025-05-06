@@ -41,7 +41,7 @@ def compute_metrics(eval_pred):
 
 # Neue TrainingArguments (für Evaluation)
 eval_args = TrainingArguments(
-    output_dir="./eval_results",  # muss existieren, wird aber nicht wirklich benutzt
+    output_dir="../eval_results",  # muss existieren, wird aber nicht wirklich benutzt
     per_device_eval_batch_size=32,
     do_train=False,
     do_eval=True,
@@ -58,6 +58,6 @@ trainer = Trainer(
 
 # Evaluation starten
 results = trainer.evaluate()
-print("Evaluationsergebnisse:")
+print("Evaluationsergebnis:")
 for key, value in results.items():
     print(f"{key}: {value:.4f}")

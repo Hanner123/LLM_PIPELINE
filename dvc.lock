@@ -5,16 +5,25 @@ stages:
     deps:
     - path: code/bert_dataset.py
       hash: md5
-      md5: dea1558277217589a96f17d0b478ac95
-      size: 17999
+      md5: 1bc519848a6cc5be3af42e81e9372f46
+      size: 18331
     - path: code/tiny_train.py
       hash: md5
-      md5: 74b1e871773dae2c4b7d49690efe89c1
-      size: 2129
+      md5: fe31ecfaf83baae2c81cd6794fc63f5a
+      size: 2913
+    params:
+      params.yaml:
+        train.batch_size: 16
+        train.d_model: 768
+        train.dropout: 0.1
+        train.epochs: 5
+        train.heads: 12
+        train.lr: 0.0001
+        train.weight_decay: 0.01
     outs:
     - path: models/tinybert_saved_model
       hash: md5
-      md5: 0d4d42e2859f783d9d25c537ecbdc6ce.dir
+      md5: bb25950c766ebaeca7e72b84e2c96df9.dir
       size: 18495514
       nfiles: 6
   export:
@@ -22,27 +31,68 @@ stages:
     deps:
     - path: code/export.py
       hash: md5
-      md5: 89ff905203c99169276128732b1a2e45
-      size: 1293
+      md5: 84e8faba77ac3eac6903a38c2cd2c2c1
+      size: 1279
     - path: models/tinybert_saved_model
       hash: md5
-      md5: 0d4d42e2859f783d9d25c537ecbdc6ce.dir
+      md5: bb25950c766ebaeca7e72b84e2c96df9.dir
       size: 18495514
       nfiles: 6
     outs:
-    - path: models/tinybert_post_training.onnx
+    - path: models/tinybert.onnx
       hash: md5
-      md5: 946df3a865dfd645c3f8137a79e5008c
+      md5: 74f449f02d69d8e6f799ea8c96be5026
       size: 17603568
   evaluate:
     cmd: python code/evaluate_model.py
     deps:
     - path: code/evaluate_model.py
       hash: md5
-      md5: b9e119425b1b40a77b86fe3504a265b8
-      size: 2012
+      md5: 9ca508087b32a5155746e638d5a9e316
+      size: 2011
     - path: models/tinybert_saved_model
       hash: md5
-      md5: 0d4d42e2859f783d9d25c537ecbdc6ce.dir
+      md5: bb25950c766ebaeca7e72b84e2c96df9.dir
       size: 18495514
       nfiles: 6
+  measure:
+    cmd: python code/measure.py
+    deps:
+    - path: code/bar_1.json
+      hash: md5
+      md5: 1abfce1ddffdd19b77a5a827b726a824
+      size: 474
+    - path: code/bar_2.json
+      hash: md5
+      md5: 77565dd0c332852d5f4c81098fc7e689
+      size: 484
+    - path: code/bar_3.json
+      hash: md5
+      md5: cf35cfb10c6d62c894bbbf9f1a166ead
+      size: 582
+    - path: code/measure.py
+      hash: md5
+      md5: 4e50cffd8547c84e95241e62df120313
+      size: 13323
+    - path: datasets/tokenized_agnews_test.pt
+      hash: md5
+      md5: db0ea7f0705e65f4873ac08d1a160cc8
+      size: 15627446
+    - path: models/tinybert_saved_model
+      hash: md5
+      md5: bb25950c766ebaeca7e72b84e2c96df9.dir
+      size: 18495514
+      nfiles: 6
+    outs:
+    - path: throughput/latency_results.json
+      hash: md5
+      md5: 5503742ac093933ab92659c3acbfc2fe
+      size: 1935
+    - path: throughput/throughput_results.json
+      hash: md5
+      md5: 535be132a8c50fcc891ed29a6e15198c
+      size: 882
+    - path: throughput/throughput_results_2.json
+      hash: md5
+      md5: 535be132a8c50fcc891ed29a6e15198c
+      size: 882

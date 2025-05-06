@@ -4,6 +4,14 @@ stages:
     deps:
       - code/tiny_train.py
       - code/bert_dataset.py
+    params:
+      - train.batch_size
+      - train.epochs
+      - train.lr
+      - train.d_model
+      - train.heads
+      - train.dropout
+      - train.weight_decay
     outs:
       - models/tinybert_saved_model
   evaluate:
@@ -17,4 +25,34 @@ stages:
       - code/export.py
       - models/tinybert_saved_model
     outs: 
-      - models/tinybert_post_training.onnx
+      - models/tinybert.onnx
+  measure:
+    cmd: python code/measure.py
+    deps:
+      - code/measure.py
+      - code/bar_1.json
+      - code/bar_2.json
+      - code/bar_3.json
+      - models/tinybert_saved_model
+      - datasets/tokenized_agnews_test.pt
+    plots:
+     -  throughput/throughput_results.json:
+         template: bar_2.json
+         x: batch_size
+         y: throughput_batches_per_s
+         cache: false
+     - throughput/throughput_results_2.json:
+         template: bar_1.json
+         x: batch_size
+         y: throughput_images_per_s
+         cache: false
+     - throughput/latency_results.json:
+         template: bar_3.json
+         x: batch_size
+         y: value
+         cache: false
+
+
+# params - fertig
+# measure & model dynamic axes
+# quantisierung: onnx, torch, qonnx, brevitas

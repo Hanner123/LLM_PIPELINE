@@ -13,7 +13,12 @@ import math
 import torch.nn.functional as F
 import numpy as np
 from torch.optim import Adam
+import yaml
 
+def load_params():
+    with open('params.yaml', 'r') as f:
+        params = yaml.safe_load(f)
+    return params
 
 class BERTDataset(Dataset):
     def __init__(self, data_pair, tokenizer, seq_len=64):
@@ -270,7 +275,13 @@ class BERT(torch.nn.Module):
     BERT model : Bidirectional Encoder Representations from Transformers.
     """
 
-    def __init__(self, vocab_size, d_model=768, n_layers=12, heads=12, dropout=0.1):
+    params = load_params()
+    n_layers = params["train"]["n_layers"]
+    heads = params["train"]["heads"]
+    dropout = params["epochs"]["dropout"]
+    d_model = params["train"]["d_model"]
+
+    def __init__(self, vocab_size, d_model=d_model, n_layers=n_layers, heads=heads, dropout=dropout):
         """
         :param vocab_size: vocab_size of total words
         :param hidden: BERT model hidden size
