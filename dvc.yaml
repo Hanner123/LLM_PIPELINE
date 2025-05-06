@@ -37,10 +37,28 @@ stages:
       # - models/tinybert_256.onnx
       # - models/tinybert_512.onnx
       # - models/tinybert_1024.onnx
-  measure:
-    cmd: python code/measure.py #_feste_batch_size.py
+  quantize:
+    cmd: python code/quantize.py #_feste_batch_size.py
     deps:
-      - code/measure.py #_feste_batch_size.py
+      - code/quantize.py #_feste_batch_size.py
+      - models/tinybert.onnx
+    outs:
+      - quantized_model_int8.trt
+      # - models/tinybert_1_quantized.onnx
+      # - models/tinybert_2_quantized.onnx
+      # - models/tinybert_4_quantized.onnx
+      # - models/tinybert_8_quantized.onnx
+      # - models/tinybert_16_quantized.onnx
+      # - models/tinybert_32_quantized.onnx
+      # - models/tinybert_64_quantized.onnx
+      # - models/tinybert_128_quantized.onnx
+      # - models/tinybert_256_quantized.onnx
+      # - models/tinybert_512_quantized.onnx
+      # - models/tinybert_1024_quantized.onnx
+  measure:
+    cmd: python code/measure_quantized.py #_feste_batch_size.py
+    deps:
+      - code/measure_quantized.py #_feste_batch_size.py
       - code/bar_1.json
       - code/bar_2.json
       - code/bar_3.json
@@ -56,7 +74,8 @@ stages:
       # - models/tinybert_256.onnx
       # - models/tinybert_512.onnx
       # - models/tinybert_1024.onnx
-      - models/tinybert.onnx
+      # - models/tinybert.onnx
+      - quantized_model_int8.trt
       - models/tinybert_saved_model
       - datasets/tokenized_agnews_test.pt
     plots:

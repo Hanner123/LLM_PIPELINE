@@ -10,6 +10,8 @@ import pynvml
 import onnx
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, Trainer, TrainingArguments
 from pathlib import Path
+from datasets import load_dataset
+from torch.utils.data import TensorDataset, DataLoader
 
 def to_device(data,device):
     if isinstance(data, (list,tuple)): #The isinstance() function returns True if the specified object is of the specified type, otherwise False.
@@ -142,8 +144,7 @@ def build_tensorrt_engine(onnx_model_path):
 
     return engine, context
 
-from datasets import load_dataset
-from torch.utils.data import TensorDataset, DataLoader
+
 
 def create_test_dataloader(data_path, batch_size, device):
     """
@@ -280,6 +281,16 @@ if __name__ == "__main__":
     engine, context = build_tensorrt_engine(onnx_model_path)
 
     batch_sizes = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024] # [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
+
+# Wieso Einbruch ab 256 Batch Size?
+# An den Parametern und der Speicherplatzzuweisung liegt es nicht
+# mit nvidia smi watch sieht man, dass schon bei batch size 32 das "maximum" an GPU-Speicher belegt ist (1560 MiB)
+# chat gpt: 
+# ab batch size 32 wird speicher knapp
+# Wenn die Inferenzzeit überproportional steigt (weil z. B. Swapping oder Taktikwechsel passiert), fällt der Throughput/Bild
+# ab batch size 256 Muss TensorRT evtl. intern Speicher mehrfach verwenden (Recycling, Swapping).
+# Kann sogar Paging oder Kontextwechsel zur Folge haben → das kostet Zeit, was den Durchsatz pro Bild reduziert.
+
     context=0
     throughput_log, latency_log, latency_log_batch = calculate_latency_and_throughput(context, batch_sizes, onnx_model_path)
 

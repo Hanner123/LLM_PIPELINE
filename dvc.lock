@@ -56,7 +56,7 @@ stages:
       size: 18495514
       nfiles: 6
   measure:
-    cmd: python code/measure.py
+    cmd: python code/measure_quantized.py
     deps:
     - path: code/bar_1.json
       hash: md5
@@ -74,37 +74,53 @@ stages:
       hash: md5
       md5: c30440284b82ff8b40f4dedae38c9992
       size: 592
-    - path: code/measure.py
+    - path: code/measure_quantized.py
       hash: md5
-      md5: 09f3b85467c1f5c7782079d24caf3ed3
-      size: 13929
+      md5: 5d4d19cb119831b47f6d7ad5961fb37b
+      size: 14425
     - path: datasets/tokenized_agnews_test.pt
       hash: md5
       md5: db0ea7f0705e65f4873ac08d1a160cc8
       size: 15627446
-    - path: models/tinybert.onnx
-      hash: md5
-      md5: 3942cfe2d45d44291cc7fbe7ad08b9a8
-      size: 17603568
     - path: models/tinybert_saved_model
       hash: md5
       md5: 20085006f7631438fddcf692f1550367.dir
       size: 18495514
       nfiles: 6
+    - path: quantized_model_int8.trt
+      hash: md5
+      md5: 63dc575644fd8212d6d1aac30a15fce4
+      size: 18806292
     outs:
     - path: throughput/latency_results.json
       hash: md5
-      md5: 2e1e47f6bcbb533970f88a28bdb6e13a
-      size: 3604
+      md5: b1e2ea1a96f5a96546862f0612e1f4ca
+      size: 3599
     - path: throughput/latency_results_batch.json
       hash: md5
-      md5: ec4a67218a9ce1aaa0c12f8f7cfda7bd
-      size: 3567
+      md5: eb45efdedb5554cbe960d96dd5f101cb
+      size: 3571
     - path: throughput/throughput_results.json
       hash: md5
-      md5: ac03df56dba442f9766f9b84a92fc1c9
-      size: 1625
+      md5: 12e5a2f20cf5d318c3deca1151acd66d
+      size: 1623
     - path: throughput/throughput_results_2.json
       hash: md5
-      md5: ac03df56dba442f9766f9b84a92fc1c9
-      size: 1625
+      md5: 12e5a2f20cf5d318c3deca1151acd66d
+      size: 1623
+  quantize:
+    cmd: python code/quantize.py
+    deps:
+    - path: code/quantize.py
+      hash: md5
+      md5: ff19a65f5e4f5a70ec9b0b8867c5b751
+      size: 4076
+    - path: models/tinybert.onnx
+      hash: md5
+      md5: 3942cfe2d45d44291cc7fbe7ad08b9a8
+      size: 17603568
+    outs:
+    - path: quantized_model_int8.trt
+      hash: md5
+      md5: 63dc575644fd8212d6d1aac30a15fce4
+      size: 18806292
