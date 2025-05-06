@@ -124,7 +124,7 @@ def build_tensorrt_engine(onnx_model_path):
             raise RuntimeError("ONNX Parsing failed")
 
     config = builder.create_builder_config()
-    config.set_memory_pool_limit(trt.MemoryPoolType.WORKSPACE, 1 << 30)
+    config.set_memory_pool_limit(trt.MemoryPoolType.WORKSPACE, 1 << 40)
 
     # Set optimization profile for dynamic batch size
     profile = builder.create_optimization_profile()

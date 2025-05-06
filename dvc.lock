@@ -76,7 +76,7 @@ stages:
       size: 592
     - path: code/measure.py
       hash: md5
-      md5: 64b04422b5b70c075334e243ccfc325d
+      md5: 09f3b85467c1f5c7782079d24caf3ed3
       size: 13929
     - path: datasets/tokenized_agnews_test.pt
       hash: md5
@@ -94,17 +94,17 @@ stages:
     outs:
     - path: throughput/latency_results.json
       hash: md5
-      md5: cf349137b7205a663824892865efde4b
-      size: 3603
+      md5: 2e1e47f6bcbb533970f88a28bdb6e13a
+      size: 3604
     - path: throughput/latency_results_batch.json
       hash: md5
-      md5: ae13898c97dbb0138844f58bff7fbabb
-      size: 3563
+      md5: ec4a67218a9ce1aaa0c12f8f7cfda7bd
+      size: 3567
     - path: throughput/throughput_results.json
       hash: md5
-      md5: 2d02f3bf2c127e775be4a259a28bfa5c
-      size: 1621
+      md5: ac03df56dba442f9766f9b84a92fc1c9
+      size: 1625
     - path: throughput/throughput_results_2.json
       hash: md5
-      md5: 2d02f3bf2c127e775be4a259a28bfa5c
-      size: 1621
+      md5: ac03df56dba442f9766f9b84a92fc1c9
+      size: 1625
