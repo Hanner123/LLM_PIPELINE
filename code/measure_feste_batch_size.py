@@ -116,24 +116,14 @@ def build_tensorrt_engine(onnx_model_path):
     network = builder.create_network(1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH))
     parser = trt.OnnxParser(network, logger)
 
-    # Parse the ONNX model
-    with open(onnx_model_path, 'rb') as f:
-        if not parser.parse(f.read()):
-            for i in range(parser.num_errors):
-                print(parser.get_error(i))
-            raise RuntimeError("ONNX Parsing failed")
+    success = parser.parse_from_file(str(onnx_model_path))
+    if not success:
+        for idx in range(parser.num_errors):
+            print(parser.get_error(idx))
+        raise RuntimeError(f"Fehler beim Parsen von {onnx_model_path}")
 
     config = builder.create_builder_config()
-    config.set_memory_pool_limit(trt.MemoryPoolType.WORKSPACE, 1 << 30)
-
-    # Set optimization profile for dynamic batch size
-    profile = builder.create_optimization_profile()
-
-    # Annahme: das Modell hat die Inputs ["input_ids", "attention_mask"]
-    for i in range(network.num_inputs):
-        name = network.get_input(i).name
-        profile.set_shape(name, (1, 128), (8, 128), (1024, 128))  # min, opt, max batch size
-    config.add_optimization_profile(profile)
+    config.set_memory_pool_limit(trt.MemoryPoolType.WORKSPACE, 1 << 30)  # 1 MiB
 
     serialized_engine = builder.build_serialized_network(network, config)
     runtime = trt.Runtime(logger)
@@ -177,7 +167,7 @@ def create_test_dataloader(data_path, batch_size, device):
 
 
 
-def calculate_latency_and_throughput(context, batch_sizes, onnx_model_path):
+def calculate_latency_and_throughput(batch_sizes):
     """
     Berechnet die durchschnittliche Latenz und den Durchsatz (Bilder und Batches pro Sekunde) für verschiedene Batchgrößen.
     :param context: TensorRT-Execution-Context.
@@ -196,6 +186,7 @@ def calculate_latency_and_throughput(context, batch_sizes, onnx_model_path):
     latency_log_batch = []
 
     for batch_size in batch_sizes:
+        onnx_model_path = Path(__file__).resolve().parent.parent / "models" / f"tinybert_{batch_size}.onnx"
         engine, context = build_tensorrt_engine(onnx_model_path)
         test_loader = create_test_dataloader(data_path, batch_size, "cpu")
         device_input, device_attention_mask, device_output, stream_ptr, torch_stream = test_data(context, batch_size)
@@ -274,14 +265,12 @@ def test_data(context, batch_size):
 
 
 if __name__ == "__main__":
-    onnx_model_path = Path(__file__).resolve().parent.parent / "models" / "tinybert.onnx"
+    #onnx_model_path = Path(__file__).resolve().parent.parent / "models"
     data_path = Path(__file__).resolve().parent.parent / "datasets" / "tokenized_agnews_test.pt"
 
-    engine, context = build_tensorrt_engine(onnx_model_path)
-
-    batch_sizes = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024] # [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
+    batch_sizes = [1, 2, 4, 8, 16, 32, 64, 128, 256,  512, 1024] # [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024], danachv zu viel speicher...
     context=0
-    throughput_log, latency_log, latency_log_batch = calculate_latency_and_throughput(context, batch_sizes, onnx_model_path)
+    throughput_log, latency_log, latency_log_batch = calculate_latency_and_throughput(batch_sizes)
 
     # profile = onnx_tool.model_profile(onnx_model_path, None, None) # geht nicht bei dynamischer batch size
     throughput_results = Path(__file__).resolve().parent.parent / "throughput" / "throughput_results.json"
