@@ -126,7 +126,7 @@ def build_tensorrt_engine(onnx_model_path):
             raise RuntimeError("ONNX Parsing failed")
 
     config = builder.create_builder_config()
-    config.set_flag(trt.BuilderFlag.FP16)  # Aktiviere FP16 - Quantisierung!!!, benötigt keine Kalibrierungsdatei(erst ab INT8)
+    # config.set_flag(trt.BuilderFlag.FP16)  # Aktiviere FP16 - Quantisierung!!!, benötigt keine Kalibrierungsdatei(erst ab INT8)
     config.set_memory_pool_limit(trt.MemoryPoolType.WORKSPACE, 1 << 40)
 
     # Set optimization profile for dynamic batch size

@@ -10,3 +10,4 @@ data/
 models/
 datasets/
 code/gitkey.txt
+/quantized_model_int8.trt
