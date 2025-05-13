@@ -89,3 +89,7 @@ model_dir = Path(__file__).resolve().parent.parent / "models" / "tinybert_saved_
 model.save_pretrained(model_dir)
 tokenizer.save_pretrained(model_dir)
 print("Model saved to:", model_dir)
+
+model_path = Path(__file__).resolve().parent.parent / "models" / "tinybert_model_weights.pt"
+torch.save(model.state_dict(), model_path)
+print(f"Modellgewichte gespeichert unter: {model_path}")

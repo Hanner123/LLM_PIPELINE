@@ -20,15 +20,13 @@ dummy_input = {k: v.to(device) for k, v in dummy_input.items()}
 
 model.eval().to(device)
 
-
-
-
 # Export nach ONNX
 model_dir = Path(__file__).resolve().parent.parent / "models" / "tinybert.onnx"
 torch.onnx.export(
     model,                                 # Modell
     (dummy_input["input_ids"], dummy_input["attention_mask"]),  # Eingaben
     model_dir,                     # Output-Pfad
+    do_constant_folding=True,
     input_names=["input_ids", "attention_mask"],
     output_names=["logits"],
     dynamic_axes={"input_ids": {0: "batch_size"}, 
