@@ -41,7 +41,11 @@ class BERTDataset(Dataset):
         t2_random, t2_label = self.random_word(t2)
 
         # Step 3: Adding CLS and SEP tokens to the start and end of sentences
-         # Adding PAD token for labels
+        # Adding PAD token for labels
+        # CLS: Platzhalter für wahrheitswert "ist der folgende satz tatsächlich der nächste?"
+        # kein mlm -> kein mask token
+        # SEP: Platzhalter für Satzende
+        # PAD: Platzhalter für Padding, damit alle Sätze die gleiche Länge haben
         t1 = [self.tokenizer.vocab['[CLS]']] + t1_random + [self.tokenizer.vocab['[SEP]']]
         t2 = t2_random + [self.tokenizer.vocab['[SEP]']]
         t1_label = [self.tokenizer.vocab['[PAD]']] + t1_label + [self.tokenizer.vocab['[PAD]']]
@@ -278,7 +282,7 @@ class BERT(torch.nn.Module):
     params = load_params()
     n_layers = params["train"]["n_layers"]
     heads = params["train"]["heads"]
-    dropout = params["epochs"]["dropout"]
+    dropout = params["train"]["dropout"]
     d_model = params["train"]["d_model"]
 
     def __init__(self, vocab_size, d_model=d_model, n_layers=n_layers, heads=heads, dropout=dropout):

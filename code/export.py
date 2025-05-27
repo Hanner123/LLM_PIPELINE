@@ -6,8 +6,13 @@ from pathlib import Path
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-tokenizer = AutoTokenizer.from_pretrained("./models/tinybert_saved_model")
-model = AutoModelForSequenceClassification.from_pretrained("./models/tinybert_saved_model")
+token_path = Path(__file__).resolve().parent.parent / "models" / "tinybert_saved_model"
+tokenizer = AutoTokenizer.from_pretrained(
+    token_path, local_files_only=True
+)
+model = AutoModelForSequenceClassification.from_pretrained(
+    token_path, local_files_only=True
+)
 
 dummy_input = tokenizer(
     "This is a dummy input for ONNX export.",
@@ -16,7 +21,11 @@ dummy_input = tokenizer(
     max_length=128,
     truncation=True,
 )
-dummy_input = {k: v.to(device) for k, v in dummy_input.items()}
+# für int32
+# vorher: dummy_input = {k: v.to(device) for k, v in dummy_input.items()}
+dummy_input = {
+    k: v.to(dtype=torch.int32, device=device) for k, v in dummy_input.items()
+}
 
 model.eval().to(device)
 

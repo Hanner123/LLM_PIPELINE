@@ -12,6 +12,10 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification, Trai
 from pathlib import Path
 from datasets import load_dataset
 from torch.utils.data import TensorDataset, DataLoader
+import pycuda.driver as cuda
+import pycuda.autoinit
+import os
+
 
 def to_device(data,device):
     if isinstance(data, (list,tuple)): #The isinstance() function returns True if the specified object is of the specified type, otherwise False.
@@ -29,6 +33,9 @@ class DeviceDataLoader():
     
     def __len__(self):
         return len(self.dl)
+    
+
+# accuracy vom LLM berechnen
 
 def accuracy(labels, outputs):
     # funktioniert nicht mit größerer batch size
@@ -47,6 +54,49 @@ def accuracy(labels, outputs):
 def save_json(log, filepath):
     with open(filepath, "w") as f:
         json.dump(log, f, indent=4)
+
+class MyEntropyCalibrator(trt.IInt8EntropyCalibrator2):
+     
+    def __init__(self, dataloader, batch_size, cache_file="calibration.cache"):
+        super(MyEntropyCalibrator, self).__init__()
+        self.dataloader = dataloader
+        self.data_iter = iter(dataloader)
+        example_input = next(self.data_iter)[0].numpy().astype(np.int32)
+        attention_mask = next(self.data_iter)[1].numpy().astype(np.int32)
+        self.device_input_ids = cuda.mem_alloc(example_input.nbytes)
+        self.device_attention_mask = cuda.mem_alloc(attention_mask.nbytes)
+        self.cache_file = cache_file
+        self.batch_size = batch_size
+
+    def get_batch_size(self):
+        return self.batch_size
+
+    def get_batch(self, names):
+        try:
+            batch = next(self.data_iter)
+        except StopIteration:
+            return None
+
+        # Nur Eingaben verwenden (nicht Labels)
+        input_ids = batch[0].cpu().numpy().astype(np.int32)
+        attention_mask = batch[1].numpy().astype(np.int32)
+
+        cuda.memcpy_htod(self.device_input_ids, input_ids)
+        cuda.memcpy_htod(self.device_attention_mask, attention_mask)
+        return [int(self.device_input_ids), int(self.device_attention_mask)]
+
+
+    def read_calibration_cache(self):
+        if os.path.exists(self.cache_file):
+            with open(self.cache_file, "rb") as f:
+                return f.read()
+        return None
+
+    def write_calibration_cache(self, cache):
+        with open(self.cache_file, "wb") as f:
+            f.write(cache)
+
+
 
 def measure_latency(context, test_loader, device_input, attention_mask, device_output, stream_ptr, torch_stream, batch_size=1):
     """
@@ -105,7 +155,7 @@ def print_latency(latency_ms, latency_synchronize, latency_datatransfer, end_tim
     print(f"Throughput: {throughput_batches:.4f} Batches/Sekunde")
     print(f"Throughput: {throughput_images:.4f} Bilder/Sekunde")
 
-def build_tensorrt_engine(onnx_model_path):
+def build_tensorrt_engine(onnx_model_path, test_loader, batch_size):
     """
     Erstellt und gibt die TensorRT-Engine und den Kontext zurück.
     :param onnx_model_path: Pfad zur ONNX-Modell-Datei.
@@ -126,8 +176,17 @@ def build_tensorrt_engine(onnx_model_path):
             raise RuntimeError("ONNX Parsing failed")
 
     config = builder.create_builder_config()
-    config.set_flag(trt.BuilderFlag.FP16)  # Aktiviere FP16 - Quantisierung!!!, benötigt keine Kalibrierungsdatei(erst ab INT8)
+    
     config.set_memory_pool_limit(trt.MemoryPoolType.WORKSPACE, 1 << 40)
+
+
+    # INT8 aktivieren
+    config.set_flag(trt.BuilderFlag.FP16)
+    # config.set_flag(trt.BuilderFlag.STRICT_TYPES)
+
+    # Kalibrator setzen
+    # calibrator = MyEntropyCalibrator(test_loader, batch_size)
+    # config.int8_calibrator = calibrator
 
     # Set optimization profile for dynamic batch size
     profile = builder.create_optimization_profile()
@@ -139,6 +198,9 @@ def build_tensorrt_engine(onnx_model_path):
     config.add_optimization_profile(profile)
 
     serialized_engine = builder.build_serialized_network(network, config)
+    if serialized_engine is None:
+        raise RuntimeError("Fehler beim Bauen der TensorRT-Engine: serialized_engine ist None.")
+
     runtime = trt.Runtime(logger)
     engine = runtime.deserialize_cuda_engine(serialized_engine)
     context = engine.create_execution_context()
@@ -178,7 +240,6 @@ def create_test_dataloader(data_path, batch_size, device):
     return test_loader
 
 
-
 def calculate_latency_and_throughput(context, batch_sizes, onnx_model_path):
     """
     Berechnet die durchschnittliche Latenz und den Durchsatz (Bilder und Batches pro Sekunde) für verschiedene Batchgrößen.
@@ -198,8 +259,8 @@ def calculate_latency_and_throughput(context, batch_sizes, onnx_model_path):
     latency_log_batch = []
 
     for batch_size in batch_sizes:
-        engine, context = build_tensorrt_engine(onnx_model_path)
         test_loader = create_test_dataloader(data_path, batch_size, "cpu")
+        engine, context = build_tensorrt_engine(onnx_model_path, test_loader, batch_size)
         device_input, device_attention_mask, device_output, stream_ptr, torch_stream = test_data(context, batch_size)
 
         
@@ -277,9 +338,10 @@ def test_data(context, batch_size):
 
 if __name__ == "__main__":
     onnx_model_path = Path(__file__).resolve().parent.parent / "models" / "tinybert.onnx"
+    #onnx_model_path = Path(__file__).resolve().parent.parent / "models" / "model_quantized_onnx_run.onnx"
     data_path = Path(__file__).resolve().parent.parent / "datasets" / "tokenized_agnews_test.pt"
 
-    engine, context = build_tensorrt_engine(onnx_model_path)
+    # engine, context = build_tensorrt_engine(onnx_model_path)
 
     batch_sizes = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024] # [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
 

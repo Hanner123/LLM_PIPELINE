@@ -1,9 +1,9 @@
 train:
-  epochs: 5
+  epochs: 1
   lr: 0.0001
   batch_size: 16
   d_model: 768
-  n_layers: 12             
+  n_layers: 2             
   heads: 12
   dropout: 0.1
   weight_decay: 0.01
