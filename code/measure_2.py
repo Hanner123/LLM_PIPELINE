@@ -44,7 +44,8 @@ def accuracy(labels, outputs):
     i = 0
     for label in labels:
         _, predicted = torch.max(torch.tensor(outputs[i]), dim=0)
-        print("predicted: ", predicted)
+        # print("predicted: ", predicted)
+        # print("label: ", label)
         total_predictions = total_predictions + 1
         if predicted == label:
             correct_predictions = correct_predictions + 1
@@ -98,10 +99,11 @@ class MyEntropyCalibrator(trt.IInt8EntropyCalibrator2):
 
 
 
-def measure_latency(context, test_loader, device_input, attention_mask, device_output, stream_ptr, torch_stream, batch_size=1):
+def measure_latency(context, test_loader, device_input, device_attention_mask, device_output, stream_ptr, torch_stream, batch_size=1):
     """
     Funktion zur Bestimmung der Inferenzlatenz.
     """
+    # wieso wird hier nicht die batch size berücksichtigt? 
     total_time = 0
     total_time_synchronize = 0
     total_time_datatransfer = 0  # Gesamte Laufzeit aller gemessenen Batches
@@ -109,11 +111,10 @@ def measure_latency(context, test_loader, device_input, attention_mask, device_o
     # wie kann ich die input-sätze von dem Dataloader in den device_input buffer laden?
     for input_ids, attention_mask, labels in test_loader: 
 
-        input_ids = input_ids.to(device_input)
-        attention_mask = attention_mask.to(device_input)
- 
         start_time_datatransfer = time.time()  # Startzeit messen
-        device_input.copy_(input_ids)  # Eingabe auf GPU übertragen
+        
+        device_input.copy_(input_ids.to(torch.int32))           # Eingabe auf GPU übertragen
+        device_attention_mask.copy_(attention_mask.to(torch.int32)) # Eingabe auf GPU übertragen
 
         start_time_synchronize = time.time()  # Startzeit messen
         torch_stream.synchronize()  
@@ -181,12 +182,7 @@ def build_tensorrt_engine(onnx_model_path, test_loader, batch_size):
 
 
     # INT8 aktivieren
-    config.set_flag(trt.BuilderFlag.INT8)
-    # config.set_flag(trt.BuilderFlag.STRICT_TYPES)
-
-    # Kalibrator setzen
-    # calibrator = MyEntropyCalibrator(test_loader, batch_size)
-    # config.int8_calibrator = calibrator
+    config.set_flag(trt.BuilderFlag.INT8) 
 
     # Set optimization profile for dynamic batch size
     profile = builder.create_optimization_profile()
@@ -239,6 +235,39 @@ def create_test_dataloader(data_path, batch_size, device):
     print(f"Anzahl der Datensätze im Testset: {len(test_loader.dataset)}")
     return test_loader
 
+def run_inference(batch_size=1):
+    """pynvml-Stream-Pointer.
+    :param torch_stream: PyTorch CUDA-Stream.
+    :param max_iterations: Maximalanzahl der Iterationen.
+    :return: (Anzahl der korrekten Vorhersagen, Gesamtanzahl der Vorhersagen).
+    """
+    test_loader = create_test_dataloader(data_path, batch_size, "cpu")
+    engine, context = build_tensorrt_engine(onnx_model_path, test_loader, batch_size)
+    device_input, device_attention_mask, device_output, stream_ptr, torch_stream = test_data(context, batch_size)
+
+    total_predictions = 0
+    correct_predictions = 0
+
+    for input_ids, attention_mask, labels in test_loader:
+
+        device_input.copy_(input_ids.to(torch.int64))           # Eingabe auf GPU übertragen
+        device_attention_mask.copy_(attention_mask.to(torch.int64)) # Eingabe auf GPU übertragen
+        torch_stream.synchronize()
+        
+        with torch.cuda.stream(torch_stream): # nicht für mehr als 64 Bildern möglich
+            context.execute_async_v3(stream_ptr)
+        torch_stream.synchronize()
+
+        output = device_output.cpu().numpy()
+
+        correct, total = accuracy(labels, output)
+        total_predictions += total
+        correct_predictions += correct
+    print(f"Anzahl der korrekten Vorhersagen: {correct_predictions}")
+    print(f"Gesamtanzahl der Vorhersagen: {total_predictions}")
+    # np.savetxt("tensorrt_inteference.txt", output)
+
+    return correct_predictions, total_predictions
 
 def calculate_latency_and_throughput(context, batch_sizes, onnx_model_path):
     """
@@ -276,7 +305,7 @@ def calculate_latency_and_throughput(context, batch_sizes, onnx_model_path):
                 context=context,
                 test_loader=test_loader,
                 device_input=device_input,
-                attention_mask=device_attention_mask,
+                device_attention_mask=device_attention_mask,
                 device_output=device_output,
                 stream_ptr=stream_ptr,
                 torch_stream=torch_stream,
@@ -346,16 +375,8 @@ if __name__ == "__main__":
 
     # engine, context = build_tensorrt_engine(onnx_model_path)
 
-    batch_sizes = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024] # [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
-
-# Wieso Einbruch ab 256 Batch Size?
-# An den Parametern und der Speicherplatzzuweisung liegt es nicht
-# mit nvidia smi watch sieht man, dass schon bei batch size 32 das "maximum" an GPU-Speicher belegt ist (1560 MiB)
-# chat gpt: 
-# ab batch size 32 wird speicher knapp
-# Wenn die Inferenzzeit überproportional steigt (weil z. B. Swapping oder Taktikwechsel passiert), fällt der Throughput/Bild
-# ab batch size 256 Muss TensorRT evtl. intern Speicher mehrfach verwenden (Recycling, Swapping).
-# Kann sogar Paging oder Kontextwechsel zur Folge haben → das kostet Zeit, was den Durchsatz pro Bild reduziert.
+    batch_sizes = [1, 2, 4, 8, 16, 32] # [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
+    print("Evaluationsergebnisse mit Quantisierung:")
 
     context=0
     throughput_log, latency_log, latency_log_batch = calculate_latency_and_throughput(context, batch_sizes, onnx_model_path)
@@ -370,13 +391,23 @@ if __name__ == "__main__":
     save_json(latency_log, latency_results)
     save_json(latency_log_batch, latency_results_batch)
 
+    batch_size = 1
+
+
+
+    correct_predictions, total_predictions = run_inference(batch_size)
+    print(f"Accuracy : {correct_predictions / total_predictions:.2%}")
+
 
 
     # main code verbessern, verschiedene batch sizes ermöglichen? eventuell auch dynamische batch sizes? oder mehrere exports...
     # funktioniert direkt mit verschiedenen batch sizes - onnx hat schon dynamische batch sizes
-
     # yaml file aktualisieren
-    # verschiedene parameter ausprobieren
+
+    # verschiedene parameter ausprobieren --> passt eigentlich
+
+    # evaluation accuracy mit quantisiertem modell
+
     # code verschönern, weniger hardcodierte werte
     # paper lesen
 

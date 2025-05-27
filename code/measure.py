@@ -42,9 +42,13 @@ def accuracy(labels, outputs):
     correct_predictions = 0
     total_predictions = 0
     i = 0
-    for label in labels:
-        _, predicted = torch.max(torch.tensor(outputs[i]), dim=0)
-        print("predicted: ", predicted)
+    # print("labels: ", labels)
+    # print("outputs: ", outputs)
+    for label in labels: # muss ich auch durch die outputs iterieren?
+        # _, predicted = torch.max(torch.tensor(outputs[i]), dim=0)
+        predicted = np.argmax(outputs, axis=1)
+        # print("predicted: ", predicted)
+        # print("label: ", label)
         total_predictions = total_predictions + 1
         if predicted == label:
             correct_predictions = correct_predictions + 1
@@ -98,7 +102,7 @@ class MyEntropyCalibrator(trt.IInt8EntropyCalibrator2):
 
 
 
-def measure_latency(context, test_loader, device_input, attention_mask, device_output, stream_ptr, torch_stream, batch_size=1):
+def measure_latency(context, test_loader, device_input, device_attention_mask, device_output, stream_ptr, torch_stream, batch_size=1):
     """
     Funktion zur Bestimmung der Inferenzlatenz.
     """
@@ -109,11 +113,12 @@ def measure_latency(context, test_loader, device_input, attention_mask, device_o
     # wie kann ich die input-sätze von dem Dataloader in den device_input buffer laden?
     for input_ids, attention_mask, labels in test_loader: 
 
-        input_ids = input_ids.to(device_input)
-        attention_mask = attention_mask.to(device_input)
+        
  
         start_time_datatransfer = time.time()  # Startzeit messen
-        device_input.copy_(input_ids)  # Eingabe auf GPU übertragen
+
+        device_input.copy_(input_ids.to(torch.int32))           # Eingabe auf GPU übertragen
+        device_attention_mask.copy_(attention_mask.to(torch.int32)) # Eingabe auf GPU übertragen
 
         start_time_synchronize = time.time()  # Startzeit messen
         torch_stream.synchronize()  
@@ -276,7 +281,7 @@ def calculate_latency_and_throughput(context, batch_sizes, onnx_model_path):
                 context=context,
                 test_loader=test_loader,
                 device_input=device_input,
-                attention_mask=device_attention_mask,
+                device_attention_mask=device_attention_mask,
                 device_output=device_output,
                 stream_ptr=stream_ptr,
                 torch_stream=torch_stream,
@@ -323,8 +328,8 @@ def test_data(context, batch_size):
     output_name = "logits"
     input_shape = (batch_size, 128) # anpassen
     output_shape = (batch_size, 4)
-    device_input = torch.empty(input_shape, dtype=torch.float64, device='cuda')  # Eingabe auf der GPU
-    device_attention_mask = torch.empty(input_shape, dtype=torch.int64, device='cuda') #Maske auf der GPU
+    device_input = torch.empty(input_shape, dtype=torch.int32, device='cuda')  # Eingabe auf der GPU
+    device_attention_mask = torch.empty(input_shape, dtype=torch.int32, device='cuda') #Maske auf der GPU
     device_output = torch.empty(output_shape, dtype=torch.float32, device='cuda')  # Ausgabe auf der GPU
     torch_stream = torch.cuda.Stream()
     stream_ptr = torch_stream.cuda_stream
@@ -335,6 +340,42 @@ def test_data(context, batch_size):
     context.set_input_shape("attention_mask", (batch_size, 128)) # muss man bei dynamischen batch sizes machen
     return device_input, device_attention_mask, device_output, stream_ptr, torch_stream
 
+def run_inference(batch_size=1):
+    """pynvml-Stream-Pointer.
+    :param torch_stream: PyTorch CUDA-Stream.
+    :param max_iterations: Maximalanzahl der Iterationen.
+    :return: (Anzahl der korrekten Vorhersagen, Gesamtanzahl der Vorhersagen).
+    """
+    test_loader = create_test_dataloader(data_path, batch_size, "cpu")
+    engine, context = build_tensorrt_engine(onnx_model_path, test_loader, batch_size)
+    device_input, device_attention_mask, device_output, stream_ptr, torch_stream = test_data(context, batch_size)
+
+    total_predictions = 0
+    correct_predictions = 0
+
+    for input_ids, attention_mask, labels in test_loader:
+        # print("input_ids[0]:", input_ids[0][:10])  # Zeige die ersten 10 Token des ersten Samples im Batch
+        # attention_mask = attention_mask.to(device_input)
+        # device_input.copy_(input_ids.to(device_input.dtype))
+        # attention_mask.copy_(attention_mask.to(device_attention_mask.dtype))
+
+        device_input.copy_(input_ids.to(torch.int32))
+        device_attention_mask.copy_(attention_mask.to(torch.int32))
+
+        torch_stream.synchronize()
+        
+        with torch.cuda.stream(torch_stream): # nicht für mehr als 64 Bildern möglich
+            context.execute_async_v3(stream_ptr)
+        torch_stream.synchronize()
+
+        output = device_output.cpu().numpy()
+
+        correct, total = accuracy(labels, output)
+        total_predictions += total
+        correct_predictions += correct
+    print(f"Anzahl der korrekten Vorhersagen: {correct_predictions}")
+    print(f"Gesamtanzahl der Vorhersagen: {total_predictions}")
+    return correct_predictions, total_predictions
 
 if __name__ == "__main__":
     onnx_model_path = Path(__file__).resolve().parent.parent / "models" / "tinybert.onnx"
@@ -343,7 +384,7 @@ if __name__ == "__main__":
 
     # engine, context = build_tensorrt_engine(onnx_model_path)
 
-    batch_sizes = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024] # [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
+    batch_sizes = [1] # [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
 
 # Wieso Einbruch ab 256 Batch Size?
 # An den Parametern und der Speicherplatzzuweisung liegt es nicht
@@ -355,6 +396,8 @@ if __name__ == "__main__":
 # Kann sogar Paging oder Kontextwechsel zur Folge haben → das kostet Zeit, was den Durchsatz pro Bild reduziert.
 
     context=0
+    correct_predictions, total_predictions = run_inference(batch_size=1)  # Teste Inferenz mit Batch Size 1
+    print(f"Accuracy : {correct_predictions / total_predictions:.2%}")
     throughput_log, latency_log, latency_log_batch = calculate_latency_and_throughput(context, batch_sizes, onnx_model_path)
 
     # profile = onnx_tool.model_profile(onnx_model_path, None, None) # geht nicht bei dynamischer batch size

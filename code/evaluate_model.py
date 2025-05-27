@@ -58,6 +58,32 @@ trainer = Trainer(
 
 # Evaluation starten
 results = trainer.evaluate()
-print("Evaluationsergebnis:")
+print("Evaluationsergebnis ohne Quantisierung:")
 for key, value in results.items():
     print(f"{key}: {value:.4f}")
+
+
+import onnxruntime as ort
+import torch
+
+# Lade das ONNX-Modell
+model_dir = Path(__file__).resolve().parent.parent / "models" / "tinybert.onnx"
+session = ort.InferenceSession(model_dir)
+
+# Beispiel-Eingabe (z.B. aus deinem Testset)
+data_path = Path(__file__).resolve().parent.parent / "datasets" / "tokenized_agnews_test.pt"
+data = torch.load(data_path)
+for i in range(50):
+    input_ids = data["input_ids"][i:i+1].numpy().astype("int32")
+    attention_mask = data["attention_mask"][i:i+1].numpy().astype("int32")
+    inputs = {
+        "input_ids": input_ids,
+        "attention_mask": attention_mask,
+    }
+    if "token_type_ids" in [inp.name for inp in session.get_inputs()]:
+        inputs["token_type_ids"] = (torch.zeros_like(data["input_ids"][i:i+1])).numpy().astype("int32")
+    outputs = session.run(None, inputs)
+    print(f"Sample {i}:")
+    print("  ONNX output logits:", outputs[0])
+    print("  Predicted class:", outputs[0].argmax(axis=1))
+    print("  True label:", data["labels"][i].item())

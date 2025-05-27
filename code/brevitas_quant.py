@@ -29,13 +29,12 @@ sys.argv = [
     "main.py",
     "--model", "prajjwal1/bert-tiny",
     "--dataset", "agnews",
-    "--export-target", "onnx_qcdq",
+    "--export-target", "onnx_qcdq", # python3 -m onnxsim quantized_model.onnx quantized_model_simplified.onnx simplifier-> schneller / onnx_qop
     "--weight-quant-granularity", "per_tensor",
-    "--input-bit-width", "8",
+    "--input-quant-granularity", "per_tensor",
+    "--input-bit-width", "8", # 8
     "--input-quant-type", "sym",
     "--act-calibration",
-    # "--input-quant-format", "qint",
-    # "--quantize-input-zero-point", "True",
     # ...weitere Optionen...
 ]
 
