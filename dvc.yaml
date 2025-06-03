@@ -26,11 +26,18 @@ stages:
       - models/tinybert_saved_model
     outs: 
       - models/tinybert.onnx
-  quantize_INT8:
+  quantize_tensorrt_INT8:
+    cmd: python code/tensorrt_quant.py 
+    deps:
+      - code/tensorrt_quant.py 
+      - models/tinybert_saved_model
+    outs:
+      - models/engines
+  quantize_int8:
     cmd: python code/brevitas_quant.py 
     deps:
       - code/brevitas_quant.py 
-      - models/tinybert_saved_model
+      - models/tinybert.onnx
     outs:
       - models/tinybert_int8/model.onnx
   measure:
@@ -41,7 +48,7 @@ stages:
       - code/plot_templates/bar_2.json
       - code/plot_templates/bar_3.json
       - code/plot_templates/bar_4.json
-      - models/model.onnx
+      - models/tinybert.onnx
       - models/tinybert_saved_model
       - datasets/tokenized_agnews_test.pt
     params:
@@ -77,7 +84,7 @@ stages:
       - code/plot_templates/bar_2_FP16.json
       - code/plot_templates/bar_3_FP16.json
       - code/plot_templates/bar_4_FP16.json
-      - models/model.onnx
+      - models/tinybert_int8/model.onnx
       - models/tinybert_saved_model
       - datasets/tokenized_agnews_test.pt
     params:
@@ -142,6 +149,42 @@ stages:
          x: batch_size
          y: value
          cache: false
+
+  measure_INT8_tensorrt:
+    cmd: python code/measure_int8_tensorrt.py 
+    deps:
+      - code/measure_int8_tensorrt.py
+      - code/plot_templates/bar_1_INT8_tensorrt.json
+      - code/plot_templates/bar_2_INT8_tensorrt.json
+      - code/plot_templates/bar_3_INT8_tensorrt.json
+      - code/plot_templates/bar_4_INT8_tensorrt.json
+      - models/engines
+      - datasets/tokenized_agnews_test.pt
+    params:
+      - measure.batch_sizes
+    outs:
+      - eval_results/accuracy_INT8_tensorrt.json
+    plots:
+     -  throughput/INT8_tensorrt/throughput_results.json:
+         template: code/plot_templates/bar_2_INT8_tensorrt.json
+         x: batch_size
+         y: throughput_batches_per_s
+         cache: false
+     - throughput/INT8_tensorrt/throughput_results_2.json:
+         template: code/plot_templates/bar_1_INT8_tensorrt.json
+         x: batch_size
+         y: throughput_images_per_s
+         cache: false
+     - throughput/INT8_tensorrt/latency_results.json:
+         template: code/plot_templates/bar_3_INT8_tensorrt.json
+         x: batch_size
+         y: value
+         cache: false
+     - throughput/INT8_tensorrt/latency_results_batch.json:
+         template: code/plot_templates/bar_4_INT8_tensorrt.json
+         x: batch_size
+         y: value
+         cache: false
   accuracy_comparison:
     cmd: python code/accuracy_comparison.py
     deps:
@@ -149,6 +192,7 @@ stages:
       - eval_results/accuracy_FP32.json
       - eval_results/accuracy_FP16.json
       - eval_results/accuracy_INT8.json
+      - eval_results/accuracy_INT8_tensorrt.json
     plots:
      -  eval_results/accuracy.json:
          template: code/plot_templates/bar_accuracy.json

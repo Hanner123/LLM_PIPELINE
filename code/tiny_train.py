@@ -12,9 +12,9 @@ def load_params():
     return params
 
 params = load_params()
-batch_size = params["train"]["batch_size"]
-learning_rate = params["train"]["lr"]
-epochs = params["train"]["epochs"]
+batch_size = int(params["train"]["batch_size"])
+learning_rate = float(params["train"]["lr"])
+epochs = int(params["train"]["epochs"])
 weight_decay = params["train"]["weight_decay"]
 
 # Modell & Tokenizer laden

@@ -24,7 +24,7 @@ for f in main_py_dir.glob("**/*"):
 
 import main
 # Argumente wie von der Kommandozeile
-print("Quantize")
+print("Quantization:")
 sys.argv = [
     "main.py",
     "--model", "prajjwal1/bert-tiny",

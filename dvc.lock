@@ -9,21 +9,21 @@ stages:
       size: 18709
     - path: code/tiny_train.py
       hash: md5
-      md5: 978ddd87c5e630823a3896cf3e730f6c
-      size: 3691
+      md5: b27346719634f6787ad89540a5872931
+      size: 3708
     params:
       params.yaml:
         train.batch_size: 64
         train.d_model: 768
         train.dropout: 0.1
-        train.epochs: 5
+        train.epochs: 10
         train.heads: 12
-        train.lr: 5e-05
+        train.lr: 0.0005
         train.weight_decay: 0.01
     outs:
     - path: models/tinybert_saved_model
       hash: md5
-      md5: 7d34ea52fc26a0cfd22389df3ad4c5f8.dir
+      md5: 0edfb3bc6aa647bae55e113ac340a5f5.dir
       size: 18495514
       nfiles: 6
   export:
@@ -35,13 +35,13 @@ stages:
       size: 1529
     - path: models/tinybert_saved_model
       hash: md5
-      md5: 7d34ea52fc26a0cfd22389df3ad4c5f8.dir
+      md5: 0edfb3bc6aa647bae55e113ac340a5f5.dir
       size: 18495514
       nfiles: 6
     outs:
     - path: models/tinybert.onnx
       hash: md5
-      md5: 8382011a094e30a047a433c6a59d79f4
+      md5: d3b8fcf533afb3921621ff36cab949a6
       size: 17603568
   evaluate:
     cmd: python code/evaluate_model.py
@@ -52,7 +52,7 @@ stages:
       size: 2854
     - path: models/tinybert_saved_model
       hash: md5
-      md5: 7d34ea52fc26a0cfd22389df3ad4c5f8.dir
+      md5: 0edfb3bc6aa647bae55e113ac340a5f5.dir
       size: 18495514
       nfiles: 6
   measure:
@@ -82,13 +82,13 @@ stages:
       hash: md5
       md5: db0ea7f0705e65f4873ac08d1a160cc8
       size: 15627446
-    - path: models/model.onnx
+    - path: models/tinybert.onnx
       hash: md5
-      md5: 591890517e978faec1b1186af50f03bd
-      size: 17639925
+      md5: d3b8fcf533afb3921621ff36cab949a6
+      size: 17603568
     - path: models/tinybert_saved_model
       hash: md5
-      md5: 7d34ea52fc26a0cfd22389df3ad4c5f8.dir
+      md5: 0edfb3bc6aa647bae55e113ac340a5f5.dir
       size: 18495514
       nfiles: 6
     params:
@@ -108,24 +108,24 @@ stages:
     outs:
     - path: eval_results/accuracy_FP32.json
       hash: md5
-      md5: fe53e1c2680ce9ebb69767f6746e554d
+      md5: edb64aad90376a3791c8ab2b2df02628
       size: 68
     - path: throughput/FP32/latency_results.json
       hash: md5
-      md5: 11e7bb4523d7bd62f9a7b08c694bb77b
-      size: 3593
+      md5: b4164b7ac57ebfce71e3de3d276ed56a
+      size: 3591
     - path: throughput/FP32/latency_results_batch.json
       hash: md5
-      md5: 303f77918d5d2d867b5a50e04b353a3d
-      size: 3560
+      md5: 4f4fcbd71e55ebc8e2319ddbe77fd2a2
+      size: 3561
     - path: throughput/FP32/throughput_results.json
       hash: md5
-      md5: 4a6a33c72a6dd6880a333f3bad6b9527
-      size: 1624
+      md5: f555d04db820e6b4342ac3d8176963e1
+      size: 1626
     - path: throughput/FP32/throughput_results_2.json
       hash: md5
-      md5: 4a6a33c72a6dd6880a333f3bad6b9527
-      size: 1624
+      md5: f555d04db820e6b4342ac3d8176963e1
+      size: 1626
   quantize:
     cmd: python code/brevitas_quant.py
     deps:
@@ -152,13 +152,13 @@ stages:
       size: 1429
     - path: models/tinybert_saved_model
       hash: md5
-      md5: 7d34ea52fc26a0cfd22389df3ad4c5f8.dir
+      md5: 0edfb3bc6aa647bae55e113ac340a5f5.dir
       size: 18495514
       nfiles: 6
     outs:
     - path: models/tinybert_int8/model.onnx
       hash: md5
-      md5: 591890517e978faec1b1186af50f03bd
+      md5: 52c4eaf888515f4ae3a33512b0b0ccba
       size: 17639925
   measure_FP16:
     cmd: FP16=1 python code/measure.py
@@ -187,13 +187,13 @@ stages:
       hash: md5
       md5: db0ea7f0705e65f4873ac08d1a160cc8
       size: 15627446
-    - path: models/model.onnx
+    - path: models/tinybert_int8/model.onnx
       hash: md5
-      md5: 591890517e978faec1b1186af50f03bd
+      md5: 52c4eaf888515f4ae3a33512b0b0ccba
       size: 17639925
     - path: models/tinybert_saved_model
       hash: md5
-      md5: 7d34ea52fc26a0cfd22389df3ad4c5f8.dir
+      md5: 0edfb3bc6aa647bae55e113ac340a5f5.dir
       size: 18495514
       nfiles: 6
     params:
@@ -213,31 +213,31 @@ stages:
     outs:
     - path: eval_results/accuracy_FP16.json
       hash: md5
-      md5: a53bd510aa0409dd11a24b835be97591
+      md5: f39a69975fa35e8af065594a2f42638d
       size: 68
     - path: throughput/FP16/latency_results.json
       hash: md5
-      md5: 4bf84f36537b3e5a71d7fa5bb1ec76d7
-      size: 3610
+      md5: 2776d80cb00a43f3b1a7e51203b372d4
+      size: 3599
     - path: throughput/FP16/latency_results_batch.json
       hash: md5
-      md5: 3bdb3bb84dca4f1f5234365bfe4fdff5
-      size: 3558
+      md5: ed0c328923c5aa76396184efbcef5e1f
+      size: 3563
     - path: throughput/FP16/throughput_results.json
       hash: md5
-      md5: c9bb171b6ddf4ee79a4740240eee1a17
-      size: 1623
+      md5: 883146e442e4670a7f28752674e602c8
+      size: 1632
     - path: throughput/FP16/throughput_results_2.json
       hash: md5
-      md5: c9bb171b6ddf4ee79a4740240eee1a17
-      size: 1623
+      md5: 883146e442e4670a7f28752674e602c8
+      size: 1632
   measure_INT8:
     cmd: python code/measure_int8.py
     deps:
     - path: code/measure_int8.py
       hash: md5
-      md5: c671b6df0515b96a301543705cd112c0
-      size: 18155
+      md5: 039581659965947b7bf264b1d274d13a
+      size: 18494
     - path: code/plot_templates/bar_1_INT8.json
       hash: md5
       md5: 512d0d97671e22f804d637ba1230baff
@@ -260,11 +260,11 @@ stages:
       size: 15627446
     - path: models/tinybert_int8/model.onnx
       hash: md5
-      md5: 591890517e978faec1b1186af50f03bd
+      md5: 52c4eaf888515f4ae3a33512b0b0ccba
       size: 17639925
     - path: models/tinybert_saved_model
       hash: md5
-      md5: 7d34ea52fc26a0cfd22389df3ad4c5f8.dir
+      md5: 0edfb3bc6aa647bae55e113ac340a5f5.dir
       size: 18495514
       nfiles: 6
     params:
@@ -284,24 +284,24 @@ stages:
     outs:
     - path: eval_results/accuracy_INT8.json
       hash: md5
-      md5: 516b6377182eb93df874b4895a95ec19
+      md5: 8b0355ca283b4a0bb11ef92df1c432f2
       size: 68
     - path: throughput/INT8/latency_results.json
       hash: md5
-      md5: 845a578efc99a21d389fbd90a9451091
+      md5: bd4ed8a2d3e8f405860fd495b24c4c42
       size: 3601
     - path: throughput/INT8/latency_results_batch.json
       hash: md5
-      md5: 5eebc92dd622d57c5a6cf8f6f1b47f89
-      size: 3560
+      md5: c8cb178d9c5b92612fa40975c6b00332
+      size: 3566
     - path: throughput/INT8/throughput_results.json
       hash: md5
-      md5: b8d13a12ec4fdf85fd0ec4c4cc45c1ab
-      size: 1625
+      md5: 8732067917ed846025c14a1106030a6f
+      size: 1624
     - path: throughput/INT8/throughput_results_2.json
       hash: md5
-      md5: b8d13a12ec4fdf85fd0ec4c4cc45c1ab
-      size: 1625
+      md5: 8732067917ed846025c14a1106030a6f
+      size: 1624
   accuracy_comparison:
     cmd: python code/accuracy_comparison.py
     deps:
@@ -311,18 +311,123 @@ stages:
       size: 832
     - path: eval_results/accuracy_FP16.json
       hash: md5
-      md5: a53bd510aa0409dd11a24b835be97591
+      md5: f39a69975fa35e8af065594a2f42638d
       size: 68
     - path: eval_results/accuracy_FP32.json
       hash: md5
-      md5: fe53e1c2680ce9ebb69767f6746e554d
+      md5: edb64aad90376a3791c8ab2b2df02628
       size: 68
     - path: eval_results/accuracy_INT8.json
       hash: md5
-      md5: 516b6377182eb93df874b4895a95ec19
+      md5: 8b0355ca283b4a0bb11ef92df1c432f2
       size: 68
+    - path: eval_results/accuracy_INT8_tensorrt.json
+      hash: md5
+      md5: c1e891dfd9c2c80c13fd19a5245d5afc
+      size: 77
     outs:
     - path: eval_results/accuracy.json
       hash: md5
-      md5: f09a978e7effddc271b2b588c6b6d32a
+      md5: 27063980b84554e1d0c48f1ca13476b7
       size: 260
+  quantize_tensorrt_INT8:
+    cmd: python code/tensorrt_quant.py
+    deps:
+    - path: code/tensorrt_quant.py
+      hash: md5
+      md5: 70296c40a5d334c985453b6d405ed17f
+      size: 4404
+    - path: models/tinybert_saved_model
+      hash: md5
+      md5: 0edfb3bc6aa647bae55e113ac340a5f5.dir
+      size: 18495514
+      nfiles: 6
+    outs:
+    - path: models/engines
+      hash: md5
+      md5: c3fe60a4865f16730b30565d6ff8e335.dir
+      size: 206557060
+      nfiles: 11
+  quantize_int8:
+    cmd: python code/brevitas_quant.py
+    deps:
+    - path: code/brevitas_quant.py
+      hash: md5
+      md5: 7845f3f0d3ceb3923d60af90ebca99be
+      size: 1434
+    - path: models/tinybert.onnx
+      hash: md5
+      md5: d3b8fcf533afb3921621ff36cab949a6
+      size: 17603568
+    outs:
+    - path: models/tinybert_int8/model.onnx
+      hash: md5
+      md5: 52c4eaf888515f4ae3a33512b0b0ccba
+      size: 17639925
+  measure_INT8_tensorrt:
+    cmd: python code/measure_int8_tensorrt.py
+    deps:
+    - path: code/measure_int8_tensorrt.py
+      hash: md5
+      md5: 293a7039c279d00da00c53e4f4709d71
+      size: 18123
+    - path: code/plot_templates/bar_1_INT8_tensorrt.json
+      hash: md5
+      md5: 998b3034452bb8426e05b78d35466daa
+      size: 525
+    - path: code/plot_templates/bar_2_INT8_tensorrt.json
+      hash: md5
+      md5: 07c97dc8993669e7e12d788a5fe93364
+      size: 538
+    - path: code/plot_templates/bar_3_INT8_tensorrt.json
+      hash: md5
+      md5: 45f7b553dccd6e3b05ba9dd211e39177
+      size: 619
+    - path: code/plot_templates/bar_4_INT8_tensorrt.json
+      hash: md5
+      md5: 9a82c709579ef72d64518fa009ddee1f
+      size: 629
+    - path: datasets/tokenized_agnews_test.pt
+      hash: md5
+      md5: db0ea7f0705e65f4873ac08d1a160cc8
+      size: 15627446
+    - path: models/engines
+      hash: md5
+      md5: c3fe60a4865f16730b30565d6ff8e335.dir
+      size: 206557060
+      nfiles: 11
+    params:
+      params.yaml:
+        measure.batch_sizes:
+        - 1
+        - 2
+        - 4
+        - 8
+        - 16
+        - 32
+        - 64
+        - 128
+        - 256
+        - 512
+        - 1024
+    outs:
+    - path: eval_results/accuracy_INT8_tensorrt.json
+      hash: md5
+      md5: c1e891dfd9c2c80c13fd19a5245d5afc
+      size: 77
+    - path: throughput/INT8_tensorrt/latency_results.json
+      hash: md5
+      md5: 0b9c05e02090914ed7686a1fc1a40428
+      size: 3603
+    - path: throughput/INT8_tensorrt/latency_results_batch.json
+      hash: md5
+      md5: dc630fba5a2dab00593dfbdcf8f000ca
+      size: 3563
+    - path: throughput/INT8_tensorrt/throughput_results.json
+      hash: md5
+      md5: c4917e7f85ec28ea7fa7d7fca7b3441c
+      size: 1621
+    - path: throughput/INT8_tensorrt/throughput_results_2.json
+      hash: md5
+      md5: c4917e7f85ec28ea7fa7d7fca7b3441c
+      size: 1621

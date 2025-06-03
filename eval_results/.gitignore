@@ -1,3 +1,4 @@
 /accuracy_FP32.json
 /accuracy_FP16.json
 /accuracy_INT8.json
+/accuracy_INT8_tensorrt.json

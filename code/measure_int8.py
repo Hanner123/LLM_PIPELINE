@@ -372,10 +372,12 @@ if __name__ == "__main__":
     # engine, context = build_tensorrt_engine(onnx_model_path)
 
 
-    # dvc pipeline vervollständigen: parameter bei quantisierung als option, so dass ich nichts im code ändern muss
-    # accuracy ag_news dataset - is 92% enough
-    # calibration mit tensorrt
-    # dvc experiment tracking dvc exp
+    # dvc pipeline vervollständigen: parameter bei quantisierung als option, so dass ich nichts im code ändern muss - fertig
+    # accuracy ag_news dataset - is 92% enough - ja, sieht gut aus https://www.researchgate.net/figure/Performance-test-accuracy-on-AG-News_fig4_360591395
+    # dvc experiment tracking dvc exp - abends laufen lassen
+    # calibration mit tensorrt - funktioniert, aber ist schlechter als mit brevitas... ganzes experiment (viele layer konnten nicht quantisiert werden)
+    # mehrere tensorrt engines bauen, yaml file, weitere stage mit plots
+    
     correct_predictions, total_predictions = run_inference(batch_size=1)  # Teste Inferenz mit Batch Size 1
     print(f"Accuracy : {correct_predictions / total_predictions:.2%}")
     accuracy_result = {
