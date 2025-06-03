@@ -7,6 +7,7 @@ files = [
     base_dir / "accuracy_FP16.json",
     base_dir / "accuracy_FP32.json",
     base_dir / "accuracy_INT8.json",
+    base_dir / "accuracy_INT8_tensorrt.json",
 ]
 
 # Einträge laden

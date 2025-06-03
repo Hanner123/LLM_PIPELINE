@@ -307,8 +307,8 @@ stages:
     deps:
     - path: code/accuracy_comparison.py
       hash: md5
-      md5: 293850b3ac200c49c43eae06737d49c4
-      size: 832
+      md5: 2a8833667c4a0d4c37c64cbf1123a89b
+      size: 878
     - path: eval_results/accuracy_FP16.json
       hash: md5
       md5: f39a69975fa35e8af065594a2f42638d
@@ -328,8 +328,8 @@ stages:
     outs:
     - path: eval_results/accuracy.json
       hash: md5
-      md5: 27063980b84554e1d0c48f1ca13476b7
-      size: 260
+      md5: fa7a4322c3316c8e465d8dccbcf5e975
+      size: 355
   quantize_tensorrt_INT8:
     cmd: python code/tensorrt_quant.py
     deps:
