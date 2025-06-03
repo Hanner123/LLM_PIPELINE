@@ -179,7 +179,8 @@ class BERTEmbedding(torch.nn.Module):
         x = self.token(sequence) + self.position(sequence) + self.segment(segment_label)
         return self.dropout(x)
     
-class MultiHeadedAttention(torch.nn.Module):
+from brevitas.nn import QuantMultiheadAttention
+class MultiHeadedAttention(torch.nn.Module): # gibt es schon in brevitas.nn.quant.mh
     
     def __init__(self, heads, d_model, dropout=0.1):
         super(MultiHeadedAttention, self).__init__()
@@ -488,7 +489,7 @@ class BERTTrainer:
                 self.optim_schedule.step_and_update_lr()
 
             # next sentence prediction accuracy
-            correct = next_sent_output.argmax(dim=-1).eq(data["is_next"]).sum().item()
+            correct = next_sent_output.argmax(dim=-1).eq(data["is_next"]).sum().item() # is the next sentence correct?
             avg_loss += loss.item()
             total_correct += correct
             total_element += data["is_next"].nelement()

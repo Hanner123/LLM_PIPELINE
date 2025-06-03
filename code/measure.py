@@ -16,6 +16,11 @@ import pycuda.driver as cuda
 import pycuda.autoinit
 import os
 
+import os
+
+import yaml
+
+FP16 = os.environ.get("FP16", "0") == "1"
 
 def to_device(data,device):
     if isinstance(data, (list,tuple)): #The isinstance() function returns True if the specified object is of the specified type, otherwise False.
@@ -42,13 +47,8 @@ def accuracy(labels, outputs):
     correct_predictions = 0
     total_predictions = 0
     i = 0
-    # print("labels: ", labels)
-    # print("outputs: ", outputs)
-    for label in labels: # muss ich auch durch die outputs iterieren?
-        # _, predicted = torch.max(torch.tensor(outputs[i]), dim=0)
+    for label in labels: 
         predicted = np.argmax(outputs, axis=1)
-        # print("predicted: ", predicted)
-        # print("label: ", label)
         total_predictions = total_predictions + 1
         if predicted == label:
             correct_predictions = correct_predictions + 1
@@ -56,6 +56,8 @@ def accuracy(labels, outputs):
     return correct_predictions, total_predictions
 
 def save_json(log, filepath):
+    filepath = Path(filepath)
+    filepath.parent.mkdir(parents=True, exist_ok=True)  # Ordner anlegen, falls nicht vorhanden
     with open(filepath, "w") as f:
         json.dump(log, f, indent=4)
 
@@ -185,21 +187,16 @@ def build_tensorrt_engine(onnx_model_path, test_loader, batch_size):
     config.set_memory_pool_limit(trt.MemoryPoolType.WORKSPACE, 1 << 40)
 
 
-    # INT8 aktivieren
-    config.set_flag(trt.BuilderFlag.FP16)
-    # config.set_flag(trt.BuilderFlag.STRICT_TYPES)
+    # FP16 Quantisierung
+    if FP16 == True:
+        config.set_flag(trt.BuilderFlag.FP16)
+        
 
-    # Kalibrator setzen
-    # calibrator = MyEntropyCalibrator(test_loader, batch_size)
-    # config.int8_calibrator = calibrator
-
-    # Set optimization profile for dynamic batch size
     profile = builder.create_optimization_profile()
 
-    # Annahme: das Modell hat die Inputs ["input_ids", "attention_mask"]
     for i in range(network.num_inputs):
         name = network.get_input(i).name
-        profile.set_shape(name, (1, 128), (8, 128), (1024, 128))  # min, opt, max batch size
+        profile.set_shape(name, (1, 128), (8, 128), (1024, 128))
     config.add_optimization_profile(profile)
 
     serialized_engine = builder.build_serialized_network(network, config)
@@ -223,11 +220,6 @@ def create_test_dataloader(data_path, batch_size, device):
     :return: DataLoader-Objekt für die Testdaten.
     """
 
-    # test_dataset_hf = dataset["train"].shuffle(seed=42).select(range(1000))  # Beispiel: 1000 zufällige Beispiele
-    # Wie kann ich so einen test data loader mit den ag_news daten erstellen?
-    # test_data = torch.load(data_path, map_location=device, weights_only=False) 
-    # Data_Loader = DataLoader(test_data, batch_size=batch_size, shuffle=False, num_workers=0, pin_memory=True, drop_last=True)
-    # test_loader = DeviceDataLoader(Data_Loader, device)  # test_loader in die cpu laden, wegen numpy im evaluate_model
 
     data = torch.load(data_path)
     input_ids = data["input_ids"]
@@ -241,7 +233,6 @@ def create_test_dataloader(data_path, batch_size, device):
         pin_memory=True,
         drop_last=True
     )
-    print(f"Anzahl der Datensätze im Testset: {len(test_loader.dataset)}")
     return test_loader
 
 
@@ -317,8 +308,7 @@ def calculate_latency_and_throughput(context, batch_sizes, onnx_model_path):
         throughput_log.append(throughput)
         latency_log.extend([log_latency_inteference, log_latency_synchronize, log_latency_datatransfer])
         latency_log_batch.extend([log_latency_inteference_batch, log_latency_synchronize_batch, log_latency_datatransfer_batch])
-        # print_latency(latency_ms, latency_synchronize, latency_datatransfer, end_time, start_time, num_batches, throughput_batches, throughput_images, batch_size)
-        print_latency(latency_avg, latency_synchronize_avg+latency_avg, latency_datatransfer_avg+latency_synchronize_avg+latency_avg, end_time, start_time, num_batches, throughput_batches, throughput_images, batch_size)
+        #print_latency(latency_avg, latency_synchronize_avg+latency_avg, latency_datatransfer_avg+latency_synchronize_avg+latency_avg, end_time, start_time, num_batches, throughput_batches, throughput_images, batch_size)
 
     return throughput_log, latency_log, latency_log_batch
 
@@ -340,6 +330,24 @@ def test_data(context, batch_size):
     context.set_input_shape("attention_mask", (batch_size, 128)) # muss man bei dynamischen batch sizes machen
     return device_input, device_attention_mask, device_output, stream_ptr, torch_stream
 
+def append_json(new_entry, filepath):
+    filepath = Path(filepath)
+    filepath.parent.mkdir(parents=True, exist_ok=True)
+    # Bestehende Daten laden, falls vorhanden
+    if filepath.exists():
+        with open(filepath, "r") as f:
+            try:
+                data = json.load(f)
+                if not isinstance(data, list):
+                    data = [data]
+            except Exception:
+                data = []
+    else:
+        data = []
+    data.append(new_entry)
+    with open(filepath, "w") as f:
+        json.dump(data, f, indent=4)
+
 def run_inference(batch_size=1):
     """pynvml-Stream-Pointer.
     :param torch_stream: PyTorch CUDA-Stream.
@@ -354,10 +362,6 @@ def run_inference(batch_size=1):
     correct_predictions = 0
 
     for input_ids, attention_mask, labels in test_loader:
-        # print("input_ids[0]:", input_ids[0][:10])  # Zeige die ersten 10 Token des ersten Samples im Batch
-        # attention_mask = attention_mask.to(device_input)
-        # device_input.copy_(input_ids.to(device_input.dtype))
-        # attention_mask.copy_(attention_mask.to(device_attention_mask.dtype))
 
         device_input.copy_(input_ids.to(torch.int32))
         device_attention_mask.copy_(attention_mask.to(torch.int32))
@@ -373,38 +377,46 @@ def run_inference(batch_size=1):
         correct, total = accuracy(labels, output)
         total_predictions += total
         correct_predictions += correct
-    print(f"Anzahl der korrekten Vorhersagen: {correct_predictions}")
-    print(f"Gesamtanzahl der Vorhersagen: {total_predictions}")
     return correct_predictions, total_predictions
+
+def load_params():
+    with open('params.yaml', 'r') as f:
+        params = yaml.safe_load(f)
+    return params
 
 if __name__ == "__main__":
     onnx_model_path = Path(__file__).resolve().parent.parent / "models" / "tinybert.onnx"
-    #onnx_model_path = Path(__file__).resolve().parent.parent / "models" / "model_quantized_onnx_run.onnx"
+
     data_path = Path(__file__).resolve().parent.parent / "datasets" / "tokenized_agnews_test.pt"
 
-    # engine, context = build_tensorrt_engine(onnx_model_path)
+    params = load_params()
+    batch_sizes = params["measure"]["batch_sizes"]
 
-    batch_sizes = [1] # [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
-
-# Wieso Einbruch ab 256 Batch Size?
-# An den Parametern und der Speicherplatzzuweisung liegt es nicht
-# mit nvidia smi watch sieht man, dass schon bei batch size 32 das "maximum" an GPU-Speicher belegt ist (1560 MiB)
-# chat gpt: 
-# ab batch size 32 wird speicher knapp
-# Wenn die Inferenzzeit überproportional steigt (weil z. B. Swapping oder Taktikwechsel passiert), fällt der Throughput/Bild
-# ab batch size 256 Muss TensorRT evtl. intern Speicher mehrfach verwenden (Recycling, Swapping).
-# Kann sogar Paging oder Kontextwechsel zur Folge haben → das kostet Zeit, was den Durchsatz pro Bild reduziert.
 
     context=0
     correct_predictions, total_predictions = run_inference(batch_size=1)  # Teste Inferenz mit Batch Size 1
     print(f"Accuracy : {correct_predictions / total_predictions:.2%}")
-    throughput_log, latency_log, latency_log_batch = calculate_latency_and_throughput(context, batch_sizes, onnx_model_path)
+    
+    accuracy_path = Path(__file__).resolve().parent.parent / "eval_results" /"accuracy_FP16.json" if FP16 else Path(__file__).resolve().parent.parent / "eval_results" /"accuracy_FP32.json"
+    quantisation_type = "FP16" if FP16 else "FP32"
+    accuracy_result = {
+        "quantisation_type": quantisation_type,
+        "value": correct_predictions / total_predictions
+    }
+    save_json(accuracy_result, accuracy_path)
 
-    # profile = onnx_tool.model_profile(onnx_model_path, None, None) # geht nicht bei dynamischer batch size
-    throughput_results = Path(__file__).resolve().parent.parent / "throughput" / "throughput_results.json"
-    throughput_results2 = Path(__file__).resolve().parent.parent / "throughput" / "throughput_results_2.json"
-    latency_results = Path(__file__).resolve().parent.parent / "throughput" / "latency_results.json"
-    latency_results_batch = Path(__file__).resolve().parent.parent / "throughput" / "latency_results_batch.json"
+
+    throughput_log, latency_log, latency_log_batch = calculate_latency_and_throughput(context, batch_sizes, onnx_model_path)
+    if FP16:
+        throughput_results = Path(__file__).resolve().parent.parent / "throughput" / "FP16" / "throughput_results.json"
+        throughput_results2 = Path(__file__).resolve().parent.parent / "throughput" / "FP16"/ "throughput_results_2.json"
+        latency_results = Path(__file__).resolve().parent.parent / "throughput" / "FP16"/ "latency_results.json"
+        latency_results_batch = Path(__file__).resolve().parent.parent / "throughput" / "FP16"/ "latency_results_batch.json"
+    else:
+        throughput_results = Path(__file__).resolve().parent.parent / "throughput" / "FP32"/ "throughput_results.json"
+        throughput_results2 = Path(__file__).resolve().parent.parent / "throughput" / "FP32"/ "throughput_results_2.json"
+        latency_results = Path(__file__).resolve().parent.parent / "throughput" / "FP32"/ "latency_results.json"
+        latency_results_batch = Path(__file__).resolve().parent.parent / "throughput" / "FP32"/ "latency_results_batch.json"
     save_json(throughput_log, throughput_results)
     save_json(throughput_log, throughput_results2)
     save_json(latency_log, latency_results)

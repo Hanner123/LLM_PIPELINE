@@ -93,3 +93,13 @@ print("Model saved to:", model_dir)
 model_path = Path(__file__).resolve().parent.parent / "models" / "tinybert_model_weights.pt"
 torch.save(model.state_dict(), model_path)
 print(f"Modellgewichte gespeichert unter: {model_path}")
+
+
+# PTQ with brevitas
+# nutze diese main datei: 
+# https://github.com/Xilinx/brevitas/blob/master/src/brevitas_examples/llm/llm_quant/data.py#L167 dataloader liste erstellen
+# https://github.com/Xilinx/brevitas/blob/master/src/brevitas_examples/llm/main.py main datei
+# https://github.com/Xilinx/brevitas/blob/master/src/brevitas_examples/llm/README.md readme für die options
+
+# Wie gehe ich vor? Brevitas klonen und dataloader anpassen, damit der auf meinen datensatz zugreift (mit meinem datensatz die dataloader liste erstellen)
+# main datei irgendwie in meinen code integrieren

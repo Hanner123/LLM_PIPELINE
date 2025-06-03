@@ -23,8 +23,8 @@ for f in main_py_dir.glob("**/*"):
 # richtiger pfad: /home/git/brevitas/src/brevitas_examples/llm
 
 import main
-
 # Argumente wie von der Kommandozeile
+print("Quantize")
 sys.argv = [
     "main.py",
     "--model", "prajjwal1/bert-tiny",
