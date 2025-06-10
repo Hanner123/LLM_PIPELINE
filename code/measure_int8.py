@@ -376,8 +376,10 @@ if __name__ == "__main__":
     # accuracy ag_news dataset - is 92% enough - ja, sieht gut aus https://www.researchgate.net/figure/Performance-test-accuracy-on-AG-News_fig4_360591395
     # dvc experiment tracking dvc exp - abends laufen lassen
     # calibration mit tensorrt - funktioniert, aber ist schlechter als mit brevitas... ganzes experiment (viele layer konnten nicht quantisiert werden)
-    # mehrere tensorrt engines bauen, yaml file, weitere stage mit plots
-    
+    # mehrere tensorrt engines bauen, yaml file, weitere stage mit plots - fertig
+
+    # paper schreiben
+    # Die Quantisierung mit Tensorrt auf Int8 hat teilweise funktioniert, aber es ist danach auch nicht schneller. Es konnten auch viele nodes nicht quantisiert werden, ich weiß noch nicht ob das an meinem Kalibrator liegt.
     correct_predictions, total_predictions = run_inference(batch_size=1)  # Teste Inferenz mit Batch Size 1
     print(f"Accuracy : {correct_predictions / total_predictions:.2%}")
     accuracy_result = {
