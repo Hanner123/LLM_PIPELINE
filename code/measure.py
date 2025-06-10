@@ -15,9 +15,6 @@ from torch.utils.data import TensorDataset, DataLoader
 import pycuda.driver as cuda
 import pycuda.autoinit
 import os
-
-import os
-
 import yaml
 
 FP16 = os.environ.get("FP16", "0") == "1"
