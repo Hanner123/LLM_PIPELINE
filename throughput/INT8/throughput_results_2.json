@@ -1,57 +1,57 @@
 [
     {
         "batch_size": 1,
-        "throughput_images_per_s": 7621.846437467546,
-        "throughput_batches_per_s": 7621.846437467546
+        "throughput_images_per_s": 7772.928640906552,
+        "throughput_batches_per_s": 7772.928640906552
     },
     {
         "batch_size": 2,
-        "throughput_images_per_s": 14634.63529989476,
-        "throughput_batches_per_s": 7317.31764994738
+        "throughput_images_per_s": 14771.584656912151,
+        "throughput_batches_per_s": 7385.792328456076
     },
     {
         "batch_size": 4,
-        "throughput_images_per_s": 27127.783086736934,
-        "throughput_batches_per_s": 6781.9457716842335
+        "throughput_images_per_s": 27450.219727756656,
+        "throughput_batches_per_s": 6862.554931939164
     },
     {
         "batch_size": 8,
-        "throughput_images_per_s": 47814.13800572269,
-        "throughput_batches_per_s": 5976.767250715337
+        "throughput_images_per_s": 48310.15287770602,
+        "throughput_batches_per_s": 6038.769109713253
     },
     {
         "batch_size": 16,
-        "throughput_images_per_s": 69255.5077172024,
-        "throughput_batches_per_s": 4328.46923232515
+        "throughput_images_per_s": 69688.22320197088,
+        "throughput_batches_per_s": 4355.51395012318
     },
     {
         "batch_size": 32,
-        "throughput_images_per_s": 94461.03243846147,
-        "throughput_batches_per_s": 2951.907263701921
+        "throughput_images_per_s": 88480.78053209298,
+        "throughput_batches_per_s": 2765.0243916279055
     },
     {
         "batch_size": 64,
-        "throughput_images_per_s": 113332.02789776733,
-        "throughput_batches_per_s": 1770.8129359026145
+        "throughput_images_per_s": 111223.10507971799,
+        "throughput_batches_per_s": 1737.8610168705936
     },
     {
         "batch_size": 128,
-        "throughput_images_per_s": 121939.88045224424,
-        "throughput_batches_per_s": 952.6553160331581
+        "throughput_images_per_s": 125354.22798956813,
+        "throughput_batches_per_s": 979.329906168501
     },
     {
         "batch_size": 256,
-        "throughput_images_per_s": 92420.20999444384,
-        "throughput_batches_per_s": 361.01644529079624
+        "throughput_images_per_s": 92600.50607374136,
+        "throughput_batches_per_s": 361.7207268505522
     },
     {
         "batch_size": 512,
-        "throughput_images_per_s": 91015.67507413906,
-        "throughput_batches_per_s": 177.76499037917785
+        "throughput_images_per_s": 94408.90616408653,
+        "throughput_batches_per_s": 184.3923948517315
     },
     {
         "batch_size": 1024,
-        "throughput_images_per_s": 79198.95585661837,
-        "throughput_batches_per_s": 77.34273032872888
+        "throughput_images_per_s": 79553.01547518371,
+        "throughput_batches_per_s": 77.68849167498409
     }
 ]
