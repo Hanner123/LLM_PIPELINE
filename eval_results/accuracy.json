@@ -1,18 +1,18 @@
 [
     {
         "quantisation_type": "FP16",
-        "value": 0.9268421052631579
+        "value": 0.9251315789473684
     },
     {
         "quantisation_type": "FP32",
-        "value": 0.9268421052631579
+        "value": 0.9251315789473684
     },
     {
         "quantisation_type": "INT8",
-        "value": 0.9276315789473685
+        "value": 0.9247368421052632
     },
     {
         "quantisation_type": "INT8 TensorRT",
-        "value": 0.8807894736842106
+        "value": 0.8689473684210526
     }
 ]
