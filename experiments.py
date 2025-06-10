@@ -8,7 +8,7 @@ import time
 
 # 10 logarithmisch verteilte LRs zwischen 1e-5 und 1e-3
 learning_rates = np.logspace(-5, -3, num=10)
-# learning_rates = [0.0001, 0.0005]
+#   learning_rates = [0.0001, 0.0005]
 
 results = []
 accuracy_path = Path("eval_results/accuracy_FP32.json")  
