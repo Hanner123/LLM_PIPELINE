@@ -1,6 +1,6 @@
 {
   "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-  "title": "INT8 Latency per batch",
+  "title": "INT8 Latency per batch, Tensorrt",
   "data": {"values": "<DVC_METRIC_DATA>"},
   "mark": "bar",
   "encoding": {
