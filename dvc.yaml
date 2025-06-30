@@ -41,8 +41,9 @@ stages:
     outs:
       - models/tinybert_int8/model.onnx
   measure:
-    cmd: FP16=0 python code/measure.py
+    cmd: FP16=0 python code/measure_general.py
     deps:
+      - code/measure_general.py
       - code/measure.py
       - code/plot_templates/bar_1.json
       - code/plot_templates/bar_2.json
@@ -77,8 +78,9 @@ stages:
          y: value
          cache: false
   measure_FP16:
-    cmd: FP16=1 python code/measure.py
+    cmd: FP16=1 python code/measure_general.py
     deps:
+      - code/measure_general.py
       - code/measure.py
       - code/plot_templates/bar_1_FP16.json
       - code/plot_templates/bar_2_FP16.json

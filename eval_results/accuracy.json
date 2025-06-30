@@ -1,7 +1,7 @@
 [
     {
         "quantisation_type": "FP16",
-        "value": 0.9251315789473684
+        "value": 0.925
     },
     {
         "quantisation_type": "FP32",

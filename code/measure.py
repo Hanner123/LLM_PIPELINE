@@ -354,13 +354,15 @@ def run_inference(batch_size=1):
     test_loader = create_test_dataloader(data_path, batch_size, "cpu")
     engine, context = build_tensorrt_engine(onnx_model_path, test_loader, batch_size)
     device_input, device_attention_mask, device_output, stream_ptr, torch_stream = test_data(context, batch_size)
-
     total_predictions = 0
     correct_predictions = 0
 
     for input_ids, attention_mask, labels in test_loader:
 
         device_input.copy_(input_ids.to(torch.int32))
+
+        
+
         device_attention_mask.copy_(attention_mask.to(torch.int32))
 
         torch_stream.synchronize()
