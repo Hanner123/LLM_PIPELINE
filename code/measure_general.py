@@ -134,23 +134,43 @@ def create_test_dataloader(data_path, batch_size):
     Erstellt den DataLoader für die Testdaten.
     :param data_path: Pfad zur Testdaten-Datei.
     :param batch_size: Die Batchgröße.
-    :param device: Zielgerät (z. B. 'cpu' oder 'cuda').
     :return: DataLoader-Objekt für die Testdaten.
     """
+    data = np.load(data_path)
+    input_info, output_info = get_model_io_info(onnx_model_path)
+    key_list = list(data.keys())
+    if len(input_info) > 1:
+        input_key = key_list[0]
+        attention_mask_key = key_list[1]
+        output_key = key_list[2]
+    else:
+        input_key = key_list[0]
+        attention_mask_key = None
+        output_key = key_list[1]
+    
+    
+    input_ids = torch.from_numpy(data[input_key])
+    attention_mask = torch.from_numpy(data[attention_mask_key]) if attention_mask_key else None
+    labels = torch.from_numpy(data[output_key])
 
-
-    data = torch.load(data_path)
-    input_ids = data["input_ids"]
-    attention_mask = data["attention_mask"]
-    labels = data["labels"]
-    test_dataset = TensorDataset(input_ids, attention_mask, labels)
-    test_loader = DataLoader(
-        test_dataset,
-        batch_size=batch_size,
-        shuffle=False,
-        pin_memory=True,
-        drop_last=True
-    )
+    if len(input_info) > 1:
+        test_dataset = TensorDataset(input_ids, attention_mask, labels)
+        test_loader = DataLoader(
+            test_dataset,
+            batch_size=batch_size,
+            shuffle=False,
+            pin_memory=True,
+            drop_last=True
+        )
+    else:
+        test_dataset = TensorDataset(input_ids, labels)
+        test_loader = DataLoader(
+            test_dataset,
+            batch_size=batch_size,
+            shuffle=False,
+            pin_memory=True,
+            drop_last=True
+        )
     return test_loader
 
 # Spezifisch für den Datensatz und das Modell!
@@ -499,22 +519,22 @@ if __name__ == "__main__":
     # muss in parameter datei:
     onnx_model_path = Path(__file__).resolve().parent.parent / "models" / "tinybert.onnx"
     data_path = Path(__file__).resolve().parent.parent / "datasets" / "tokenized_agnews_test.pt"
+    data_path = Path(__file__).resolve().parent.parent / "datasets" / "tokenized_agnews_test.npz"
+
 
     params = load_params()
     batch_sizes = params["measure"]["batch_sizes"]
 
 
     model = onnx.load(onnx_model_path)
-    # just for radioml?
-    # if FP16:
-    #     model = float16.convert_float_to_float16(model)
+    # funktioniert bei radioml, hier auch
+    if FP16:
+        model = float16.convert_float_to_float16(model) 
 
     input_info, output_info = get_model_io_info(onnx_model_path)
 
-
     context=0
 
-    #funktioniert, aber accuracy passt nicht (nur 22,99%)
     correct_predictions, total_predictions = run_inference(batch_size=1, input_info=input_info, output_info=output_info) 
     print(f"Accuracy : {correct_predictions / total_predictions:.2%}")
 
@@ -547,8 +567,8 @@ if __name__ == "__main__":
 
 # code generalisiert - fertig
 # code verschönert - fertig
-# mit llm pilpeline testen - fertig, aber doch noch änderungen mit attention mask in inference schleifen..
-# fp16 vergleich datentypen
+# mit llm pipeline testen - fertig, aber doch noch änderungen mit attention mask in inference schleifen..
+# fp16 vergleich datentypen - passt
 # bei llm: daten in numpy umwandeln
 # test_data_loader anpassen (alle daten als numpy dateien lesen)
 # christoph schreiben - er schickt mir andere models zum testen
