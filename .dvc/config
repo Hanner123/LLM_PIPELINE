@@ -1,0 +1,4 @@
+[core]
+    remote = sciebo_remote
+['remote "sciebo_remote"']
+    url = webdavs://uni-paderborn.sciebo.de/remote.php/webdav/
