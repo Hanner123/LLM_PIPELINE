@@ -596,8 +596,10 @@ if __name__ == "__main__":
 # test_data_loader anpassen (alle daten als numpy dateien lesen) - fertig
 # mit radio ml testen (erst in numpy umwandeln, dann in dataloader) - fertig
 # christoph schreiben - er schickt mir andere models zum testen - fertig
+# auch int 8 generalisieren - fertig
+# int 8 radioml testen - fertig
 
-# auch int 8 generalisieren - device input??
+# int 8 radioml tensorrt generalsieren, wie mit engines?
 
 # mit jetson testen (gleiche zugangsdaten wie pc)
 
