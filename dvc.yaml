@@ -116,9 +116,9 @@ stages:
          cache: false
 
   measure_INT8:
-    cmd: python code/measure_int8.py 
+    cmd: INT8=1 python code/measure_general.py
     deps:
-      - code/measure_int8.py
+      - code/measure_general.py
       - code/plot_templates/bar_1_INT8.json
       - code/plot_templates/bar_2_INT8.json
       - code/plot_templates/bar_3_INT8.json

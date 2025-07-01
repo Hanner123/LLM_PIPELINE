@@ -64,8 +64,8 @@ stages:
       size: 17915
     - path: code/measure_general.py
       hash: md5
-      md5: 3a28fea0960b6f40723dbe2c8439e37e
-      size: 21269
+      md5: 02d90084a0f0b25b774af2652d272a14
+      size: 23881
     - path: code/plot_templates/bar_1.json
       hash: md5
       md5: 92dcdaeb45f5549aeab0ff00c7a2080f
@@ -116,20 +116,20 @@ stages:
       size: 68
     - path: throughput/FP32/latency_results.json
       hash: md5
-      md5: c82ec057e4ebe1aed77ef8d4fdc52f6c
+      md5: b77984181a7de049ee49681e8f3f26e4
       size: 3595
     - path: throughput/FP32/latency_results_batch.json
       hash: md5
-      md5: 38e088cde577e6b5762067b77c0fa715
-      size: 3564
+      md5: 771b0f2639cb8d0ca4f41afce818bc13
+      size: 3559
     - path: throughput/FP32/throughput_results.json
       hash: md5
-      md5: 3fe2df74a10aee761226bc4cbb6fa8b9
-      size: 1620
+      md5: 0d086bcf145711cd10cdd4d84415b072
+      size: 1624
     - path: throughput/FP32/throughput_results_2.json
       hash: md5
-      md5: 3fe2df74a10aee761226bc4cbb6fa8b9
-      size: 1620
+      md5: 0d086bcf145711cd10cdd4d84415b072
+      size: 1624
   quantize:
     cmd: python code/brevitas_quant.py
     deps:
@@ -173,8 +173,8 @@ stages:
       size: 17915
     - path: code/measure_general.py
       hash: md5
-      md5: 3a28fea0960b6f40723dbe2c8439e37e
-      size: 21269
+      md5: 02d90084a0f0b25b774af2652d272a14
+      size: 23881
     - path: code/plot_templates/bar_1_FP16.json
       hash: md5
       md5: 3c25e7ae673fcfc1779fe671ef5ef71a
@@ -225,27 +225,27 @@ stages:
       size: 55
     - path: throughput/FP16/latency_results.json
       hash: md5
-      md5: 774f853712130e9bccddef7941748f0e
-      size: 3596
+      md5: 8cb7e2e32dbdf835632f09f377329199
+      size: 3598
     - path: throughput/FP16/latency_results_batch.json
       hash: md5
-      md5: 8d550e8d6a8c95dc14e2339999f3aa24
-      size: 3561
+      md5: 3162e3cc575fd80379a509fd50b54ef7
+      size: 3563
     - path: throughput/FP16/throughput_results.json
       hash: md5
-      md5: 8b3a24d50a33a2438598c622c6c0abdb
-      size: 1628
+      md5: fa3eb500f1934e5c5b1a57edcdda402e
+      size: 1625
     - path: throughput/FP16/throughput_results_2.json
       hash: md5
-      md5: 8b3a24d50a33a2438598c622c6c0abdb
-      size: 1628
+      md5: fa3eb500f1934e5c5b1a57edcdda402e
+      size: 1625
   measure_INT8:
-    cmd: python code/measure_int8.py
+    cmd: INT8=1 python code/measure_general.py
     deps:
-    - path: code/measure_int8.py
+    - path: code/measure_general.py
       hash: md5
-      md5: 27c7a9bc97966da7bdd353b0f9a6d50e
-      size: 18746
+      md5: 02d90084a0f0b25b774af2652d272a14
+      size: 23881
     - path: code/plot_templates/bar_1_INT8.json
       hash: md5
       md5: 512d0d97671e22f804d637ba1230baff
@@ -296,20 +296,20 @@ stages:
       size: 68
     - path: throughput/INT8/latency_results.json
       hash: md5
-      md5: a75e88cc1607da02bbc9e6083ec38bad
-      size: 3601
+      md5: 23cbe1c8640a52755d15786f28902e7a
+      size: 3596
     - path: throughput/INT8/latency_results_batch.json
       hash: md5
-      md5: 873c3cedc924afe78e38d33d0a29002a
-      size: 3561
+      md5: 95333e25274b1519fdf8e7b1d311ef4e
+      size: 3560
     - path: throughput/INT8/throughput_results.json
       hash: md5
-      md5: d9eea9894903b6bacdb723825a51e51b
-      size: 1626
+      md5: 0afcd3debad766931eea10a157e69573
+      size: 1625
     - path: throughput/INT8/throughput_results_2.json
       hash: md5
-      md5: d9eea9894903b6bacdb723825a51e51b
-      size: 1626
+      md5: 0afcd3debad766931eea10a157e69573
+      size: 1625
   accuracy_comparison:
     cmd: python code/accuracy_comparison.py
     deps:
