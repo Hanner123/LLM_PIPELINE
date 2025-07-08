@@ -40,3 +40,5 @@ sys.argv = [
 ]
 
 main.main()
+
+print("Brevitas quantization completed.")
