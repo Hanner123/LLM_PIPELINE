@@ -42,7 +42,7 @@ tokenized_datasets = dataset.map(tokenize_function, batched=True)
 
 # Trainings-Argumente festlegen
 training_args = TrainingArguments(
-    output_dir="../tinybert_results",
+    output_dir="./tinybert_results",
     do_train=True,
     do_eval=True,
     per_device_train_batch_size=batch_size,
