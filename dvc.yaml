@@ -41,7 +41,7 @@ stages:
     outs:
       - models/tinybert_int8/model.onnx
   measure:
-    cmd: FP16=0 python code/measure_general.py
+    cmd: python code/measure_general.py
     deps:
       - code/measure_general.py
       - code/measure.py

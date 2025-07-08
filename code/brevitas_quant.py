@@ -30,6 +30,7 @@ sys.argv = [
     "--model", "prajjwal1/bert-tiny",
     "--dataset", "agnews",
     "--export-target", "onnx_qcdq", # python3 -m onnxsim quantized_model.onnx quantized_model_simplified.onnx simplifier-> schneller / onnx_qop
+    "--export-prefix", "/home/hanna/git/LLM_PIPELINE/models/tinybert_int8",
     "--weight-quant-granularity", "per_tensor",
     "--input-quant-granularity", "per_tensor",
     "--input-bit-width", "8", # 8
@@ -39,3 +40,5 @@ sys.argv = [
 ]
 
 main.main()
+
+print("Brevitas quantization completed.")

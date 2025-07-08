@@ -599,9 +599,9 @@ if __name__ == "__main__":
 # auch int 8 generalisieren - fertig
 # int 8 radioml testen - fertig
 
-# int 8 radioml tensorrt generalsieren, wie mit engines?
+# int 8 radioml brevitas versuchen: brevitas auf git, noch anpassen für radioml (transformer model)
 
-# mit jetson testen (gleiche zugangsdaten wie pc)
+# mit jetson testen (gleiche zugangsdaten wie pc) - läuft gerade
 
 
 # mit anderen modellen testen

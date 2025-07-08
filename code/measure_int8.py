@@ -412,15 +412,3 @@ if __name__ == "__main__":
     correct_predictions, total_predictions = run_inference(batch_size)
 
 
-
-    # main code verbessern, verschiedene batch sizes ermöglichen? eventuell auch dynamische batch sizes? oder mehrere exports...
-    # funktioniert direkt mit verschiedenen batch sizes - onnx hat schon dynamische batch sizes
-    # yaml file aktualisieren
-
-    # verschiedene parameter ausprobieren --> passt eigentlich
-
-    # evaluation accuracy mit quantisiertem modell
-
-    # code verschönern, weniger hardcodierte werte
-    # paper lesen
-
