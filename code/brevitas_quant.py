@@ -13,7 +13,7 @@ import os
 
 # Brevitas-Ordner zum Python-Pfad hinzufügen
 
-main_py_dir = Path(__file__).resolve().parent.parent.parent / "brevitas" / "src" / "brevitas_examples" / "llm"
+main_py_dir = Path(__file__).resolve().parent.parent.parent / "Brevitas" / "src" / "brevitas_examples" / "llm"
 sys.path.append(str(main_py_dir))
 print("Brevitas main.py path:", main_py_dir)
 print(main_py_dir.exists())
@@ -21,8 +21,8 @@ for f in main_py_dir.glob("**/*"):
     print(f)
 # ausgegebener pfad: /home/hanna/git/brevitas/src/brevitas_examples/llm
 # richtiger pfad: /home/git/brevitas/src/brevitas_examples/llm
-
-import main
+import main_brevitas
+print("Verwendetes main.py:", main_brevitas.__file__)
 # Argumente wie von der Kommandozeile
 print("Quantization:")
 sys.argv = [
@@ -39,6 +39,6 @@ sys.argv = [
     # ...weitere Optionen...
 ]
 
-main.main()
+main_brevitas.main()
 
 print("Brevitas quantization completed.")

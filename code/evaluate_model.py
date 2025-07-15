@@ -4,7 +4,9 @@ import torch
 import numpy as np
 from pathlib import Path
 from evaluate import load as load_metric_eval  # falls 'datasets.load_metric' deprecated ist
+import onnx
 
+print("Neu:")
 # Modellverzeichnis
 model_dir = Path(__file__).resolve().parent.parent / "models" / "tinybert_saved_model"
 
@@ -66,9 +68,30 @@ for key, value in results.items():
 import onnxruntime as ort
 import torch
 
+#chatGPT Lösung
+sess_options = ort.SessionOptions()
+sess_options.intra_op_num_threads = 1  # oder 2 – hängt von Jetson-Modell ab
+sess_options.execution_mode = ort.ExecutionMode.ORT_SEQUENTIAL
+
+print("vor session")
+
+
+
 # Lade das ONNX-Modell
 model_dir = Path(__file__).resolve().parent.parent / "models" / "tinybert.onnx"
-session = ort.InferenceSession(model_dir)
+
+onnx.checker.check_model(model_dir)
+print("ONNX-Modell ist gültig")
+
+
+session = ort.InferenceSession(model_dir, sess_options)
+
+
+
+
+print("Model inputs:")
+for inp in session.get_inputs():
+    print(f"  {inp.name}: shape={inp.shape}, type={inp.type}")
 
 # Beispiel-Eingabe (z.B. aus deinem Testset)
 data_path = Path(__file__).resolve().parent.parent / "datasets" / "tokenized_agnews_test.pt"
