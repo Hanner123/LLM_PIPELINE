@@ -13,6 +13,6 @@
     },
     {
         "quantisation_type": "INT8 TensorRT",
-        "value": 0.25
+        "value": 0.8797368421052632
     }
 ]

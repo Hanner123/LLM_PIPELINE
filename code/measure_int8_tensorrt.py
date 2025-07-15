@@ -13,7 +13,9 @@ from pathlib import Path
 from datasets import load_dataset
 from torch.utils.data import TensorDataset, DataLoader
 import pycuda.driver as cuda
-import pycuda.autoinit
+cuda.init()
+device = cuda.Device(0)
+cfx = device.make_context()
 import os
 
 import yaml
@@ -233,7 +235,100 @@ def create_test_dataloader(data_path, batch_size, device):
     )
     return test_loader
 
-def run_inference(batch_size=1):
+def run_inference(context, test_loader, device_input, device_output, device_attention_mask, stream_ptr, torch_stream, batch_size=1, accuracy_flag=False):
+    """
+    Funktion zur Bestimmung der Inferenzlatenz.
+    """
+    total_time = 0
+    total_time_synchronize = 0
+    total_time_datatransfer = 0  
+    iterations = 0 
+
+    total_predictions = 0
+    correct_predictions = 0
+
+    for batch in test_loader: 
+        # je nach Aufbau des Modells: mit Attention Mask oder ohne
+        if len(batch) == 2:
+            xb, yb = batch
+            att_mask = None
+            token_type = None
+        elif len(batch) == 3:
+            xb, att_mask, yb = batch
+            token_type = None
+        elif len(batch) == 4:
+            xb, att_mask, yb, token_type = batch
+        else:
+            raise ValueError("Unerwartete Batch-Größe!", len(batch))
+        
+        start_time_datatransfer = time.time()  # Startzeit        
+
+        dtype = torch.int64
+
+        input_name = "input_ids"
+        device_input.copy_(xb.to(dtype))
+        context.set_tensor_address(input_name, device_input.data_ptr())
+        context.set_input_shape(input_name, device_input.shape)
+
+        if att_mask is not None:
+            att_mask_name = "attention_mask"
+            device_attention_mask.copy_(att_mask.to(dtype))
+            context.set_tensor_address(att_mask_name, device_attention_mask.data_ptr())
+            context.set_input_shape(att_mask_name, device_attention_mask.shape)
+        
+
+        output_name = "logits"
+        context.set_tensor_address(output_name, device_output.data_ptr()) 
+
+        
+        torch_stream.synchronize()
+
+        start_time_synchronize = time.time()  
+        torch_stream.synchronize()  
+
+        start_time_inteference = time.time() 
+        cfx.push()
+        try:
+            with torch.cuda.stream(torch_stream):
+                context.execute_async_v3(stream_ptr)
+        except Exception as e:
+            print("TensorRT Error:", e)
+        torch_stream.synchronize() 
+        cfx.pop()
+        end_time = time.time()
+
+        output = device_output.cpu().numpy()
+        end_time_datatransfer = time.time() 
+
+        latency = end_time - start_time_inteference  
+        latency_synchronize = end_time - start_time_synchronize  
+        latency_datatransfer = end_time_datatransfer - start_time_datatransfer  
+
+        total_time += latency
+        total_time_synchronize += latency_synchronize
+        total_time_datatransfer += latency_datatransfer
+        iterations += 1
+
+        if accuracy_flag:
+            pred = output.argmax(axis=-1)  # [batch, seq_len]
+            correct = (pred == yb.numpy()).sum()
+            total = np.prod(yb.shape)
+            correct_predictions += correct
+            total_predictions += total
+
+    accuracy = 0
+    if accuracy_flag:
+        accuracy = correct_predictions / total_predictions if total_predictions > 0 else 0
+
+    average_latency = (total_time / iterations) * 1000  # In Millisekunden
+    average_latency_synchronize = (total_time_synchronize / iterations) * 1000  # In Millisekunden
+    average_latency_datatransfer = (total_time_datatransfer / iterations) * 1000  # In Millisekunden
+
+
+    return average_latency, average_latency_synchronize, average_latency_datatransfer, accuracy
+
+
+def run_accuracy_eval(batch_size=1):
     """pynvml-Stream-Pointer.
     :param torch_stream: PyTorch CUDA-Stream.
     :param max_iterations: Maximalanzahl der Iterationen.
@@ -243,7 +338,6 @@ def run_inference(batch_size=1):
     test_loader = create_test_dataloader(data_path, batch_size, "cpu")
     engine_name = f"tinybert_int8_32.engine"
     engine_path = Path(__file__).resolve().parent.parent / "models" / "engines" / engine_name
-    data_path = Path(__file__).resolve().parent.parent / "datasets" / "tokenized_agnews_test.pt"
 
     
     logger = trt.Logger(trt.Logger.WARNING)
@@ -256,24 +350,20 @@ def run_inference(batch_size=1):
 
     total_predictions = 0
     correct_predictions = 0
+    _, _, _, accuracy = run_inference(
+                context=context,
+                test_loader=test_loader,
+                device_input=device_input,
+                device_output=device_output,
+                device_attention_mask=device_attention_mask,
+                stream_ptr=stream_ptr,
+                torch_stream=torch_stream,
+                batch_size=batch_size,
+                accuracy_flag=True
+            )
 
-    for input_ids, attention_mask, labels in test_loader:
 
-        device_input.copy_(input_ids.to(torch.int64))           # Eingabe auf GPU übertragen
-        device_attention_mask.copy_(attention_mask.to(torch.int64)) # Eingabe auf GPU übertragen
-        torch_stream.synchronize()
-        
-        with torch.cuda.stream(torch_stream): # nicht für mehr als 64 Bildern möglich
-            context.execute_async_v3(stream_ptr)
-        torch_stream.synchronize()
-
-        output = device_output.cpu().numpy()
-
-        correct, total = accuracy(labels, output)
-        total_predictions += total
-        correct_predictions += correct
-
-    return correct_predictions, total_predictions
+    return accuracy
 
 def calculate_latency_and_throughput(context, batch_sizes):
     """
@@ -319,15 +409,15 @@ def calculate_latency_and_throughput(context, batch_sizes):
         num_executions = 10.0
         for i in range(int(num_executions)):
             start_time = time.time()
-            latency_ms, latency_synchronize, latency_datatransfer = measure_latency(
+            latency_ms, latency_synchronize, latency_datatransfer, _ = run_inference(
                 context=context,
                 test_loader=test_loader,
                 device_input=device_input,
-                device_attention_mask=device_attention_mask,
                 device_output=device_output,
+                device_attention_mask=device_attention_mask,
                 stream_ptr=stream_ptr,
                 torch_stream=torch_stream,
-                batch_size=batch_size
+                batch_size=batch_size,
             )
             latency_ms_sum = latency_ms_sum + latency_ms
             latency_synchronize_sum = latency_synchronize_sum + (latency_synchronize-latency_ms)
@@ -389,11 +479,11 @@ def load_params():
 if __name__ == "__main__":
     data_path = Path(__file__).resolve().parent.parent / "datasets" / "tokenized_agnews_test.pt"
 
-    correct_predictions, total_predictions = run_inference(batch_size=1)  # Teste Inferenz mit Batch Size 1
-    print(f"Accuracy : {correct_predictions / total_predictions:.2%}")
+    accuracy_value = run_accuracy_eval(batch_size=1)  # Teste Inferenz mit Batch Size 1
+    print(f"Accuracy : {accuracy_value:.2%}")
     accuracy_result = {
         "quantisation_type": "INT8 TensorRT",
-        "value": correct_predictions / total_predictions
+        "value": accuracy_value
     }
     accuracy_path = Path(__file__).resolve().parent.parent / "eval_results" /"accuracy_INT8_tensorrt.json"
     save_json(accuracy_result, accuracy_path)
@@ -414,9 +504,7 @@ if __name__ == "__main__":
     save_json(latency_log, latency_results)
     save_json(latency_log_batch, latency_results_batch)
 
-    batch_size = 1
+    cfx.detach()
 
 
-
-    correct_predictions, total_predictions = run_inference(batch_size)
 
