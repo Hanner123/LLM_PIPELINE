@@ -203,8 +203,4 @@ stages:
          x: quantisation_type
          y: value
          cache: false
-  energy_zeus:
-    cmd: python code/energy_zeus.py
-
-      
 
