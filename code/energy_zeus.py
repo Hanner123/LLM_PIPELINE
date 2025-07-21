@@ -380,8 +380,6 @@ def run_inference(context, test_loader, device_input, device_output, device_atte
 
 
 
-
-
 if __name__ == "__main__":
     onnx_model_path = Path(__file__).resolve().parent.parent / "models" / "tinybert.onnx"
     data_path = Path(__file__).resolve().parent.parent / "datasets" / "tokenized_agnews_test.npz"
@@ -402,7 +400,6 @@ if __name__ == "__main__":
     test_loader = create_test_dataloader(data_path, 1)
     engine, context = build_tensorrt_engine(onnx_model_path, test_loader, 1, input_info)
     device_input, device_output, device_attention_mask, device_token_type, stream_ptr, torch_stream = test_data(context, 1, input_info, output_info)
-    acc = run_inteference_build_engine(batch_size, input_info, output_info, data_path, onnx_model_path)
 
     
     monitor = ZeusMonitor(gpu_indices=[0])  # default GPU 0
@@ -428,3 +425,5 @@ if __name__ == "__main__":
     result = monitor.end_window("inference")
 
     print(f"Inferenz dauerte {result.time:.3f} s und verbrauchte {result.total_energy:.2f} J")
+
+
