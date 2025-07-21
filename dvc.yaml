@@ -31,6 +31,8 @@ stages:
     deps:
       - code/tensorrt_quant.py 
       - models/tinybert_saved_model
+    params:
+      - train.batch_size
     outs:
       - models/engines
   quantize_int8:

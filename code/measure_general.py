@@ -99,7 +99,10 @@ def get_model_io_info(model_path):
     Liest Input- und Output-Infos aus einem ONNX-Modell.
     Gibt Listen von Dictionaries mit Name, Shape und Dtype zurück.
     """
-    session = ort.InferenceSession(model_path)
+    sess_options = ort.SessionOptions()
+
+    sess_options.intra_op_num_threads = 8
+    session = ort.InferenceSession(model_path, sess_options)
     input_info = [
         {
             "name": inp.name,

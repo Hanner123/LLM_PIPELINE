@@ -18,6 +18,8 @@ measure:
   - 64
   - 128
   - 256
+  - 512
+  - 1024
 measure_FP32:
   batch_sizes:
   - 1
@@ -29,6 +31,8 @@ measure_FP32:
   - 64
   - 128
   - 256
+  - 512
+  - 1024
 measure_INT8:
   batch_sizes:
   - 1
@@ -40,6 +44,8 @@ measure_INT8:
   - 64
   - 128
   - 256
+  - 512
+  - 1024
 measure_FP16:
   batch_sizes:
   - 1
@@ -51,3 +57,5 @@ measure_FP16:
   - 64
   - 128
   - 256
+  - 512
+  - 1024
