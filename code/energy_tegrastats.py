@@ -15,7 +15,9 @@ import onnx
 from pathlib import Path
 from torch.utils.data import TensorDataset, DataLoader
 import pycuda.driver as cuda
-import pycuda.autoinit
+cuda.init()
+device = cuda.Device(0)
+cfx = device.make_context()
 import os
 import yaml
 from onnxconverter_common import float16 # zu requirements hinzufügen
@@ -343,12 +345,14 @@ def run_inference(context, test_loader, device_input, device_output, device_atte
         torch_stream.synchronize()  
 
         start_time_inteference = time.time() 
+        cfx.push()
         try:
             with torch.cuda.stream(torch_stream):
                 context.execute_async_v3(stream_ptr)
         except Exception as e:
             print("TensorRT Error:", e)
         torch_stream.synchronize() 
+        cfx.pop()
         end_time = time.time()
 
         output = device_output.cpu().numpy()
@@ -445,3 +449,4 @@ if __name__ == "__main__":
         logs = f.readlines()
         # Hier kannst du mit Regex oder String-Parsing die Werte rausziehen
         print(logs[-10:])  # letzte 10 Zeilen
+    cfx.detach()
