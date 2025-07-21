@@ -19,8 +19,6 @@ print("Brevitas main.py path:", main_py_dir)
 print(main_py_dir.exists())
 for f in main_py_dir.glob("**/*"):
     print(f)
-# ausgegebener pfad: /home/hanna/git/brevitas/src/brevitas_examples/llm
-# richtiger pfad: /home/git/brevitas/src/brevitas_examples/llm
 
 import main
 # Argumente wie von der Kommandozeile

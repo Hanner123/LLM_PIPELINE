@@ -413,10 +413,3 @@ if __name__ == "__main__":
     save_json(throughput_log, throughput_results2)
     save_json(latency_log, latency_results)
     save_json(latency_log_batch, latency_results_batch)
-
-    batch_size = 1
-
-
-
-    correct_predictions, total_predictions = run_inference(batch_size)
-

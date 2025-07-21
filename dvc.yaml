@@ -153,9 +153,9 @@ stages:
          cache: false
 
   measure_INT8_tensorrt:
-    cmd: python code/measure_int8_tensorrt.py 
+    cmd: python code/measure_int8_tensorrt_2.py 
     deps:
-      - code/measure_int8_tensorrt.py
+      - code/measure_int8_tensorrt_2.py
       - code/plot_templates/bar_1_INT8_tensorrt.json
       - code/plot_templates/bar_2_INT8_tensorrt.json
       - code/plot_templates/bar_3_INT8_tensorrt.json
