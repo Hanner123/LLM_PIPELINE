@@ -22,6 +22,8 @@ import os
 import yaml
 from onnxconverter_common import float16 # zu requirements hinzufügen
 import onnxruntime as ort
+import parse_tegrastats_to_json
+
 
 # tensorrt, datasets(hugging face), pycuda
 FP16 = os.environ.get("FP16", "0") == "1"
@@ -292,98 +294,75 @@ def run_inference(context, test_loader, device_input, device_output, device_atte
     """
     Funktion zur Bestimmung der Inferenzlatenz.
     """
-    total_time = 0
-    total_time_synchronize = 0
-    total_time_datatransfer = 0  
-    iterations = 0 
+
 
     total_predictions = 0
     correct_predictions = 0
+    for i in range(10):
+        for batch in test_loader: 
+            # je nach Aufbau des Modells: mit Attention Mask oder ohne
+            if len(batch) == 2:
+                xb, yb = batch
+                att_mask = None
+                token_type = None
+            elif len(batch) == 3:
+                xb, att_mask, yb = batch
+                token_type = None
+            elif len(batch) == 4:
+                xb, att_mask, yb, token_type = batch
+            else:
+                raise ValueError("Unerwartete Batch-Größe!", len(batch))
+            
+            dtype = onnx_dtype_to_torch(input_info[0]["dtype"])
 
-    for batch in test_loader: 
-        # je nach Aufbau des Modells: mit Attention Mask oder ohne
-        if len(batch) == 2:
-            xb, yb = batch
-            att_mask = None
-            token_type = None
-        elif len(batch) == 3:
-            xb, att_mask, yb = batch
-            token_type = None
-        elif len(batch) == 4:
-            xb, att_mask, yb, token_type = batch
-        else:
-            raise ValueError("Unerwartete Batch-Größe!", len(batch))
-        
-        start_time_datatransfer = time.time()  # Startzeit        
+            input_name = input_info[0]["name"]
+            device_input.copy_(xb.to(dtype))
+            context.set_tensor_address(input_name, device_input.data_ptr())
+            context.set_input_shape(input_name, device_input.shape)
 
-        dtype = onnx_dtype_to_torch(input_info[0]["dtype"])
+            if att_mask is not None:
+                att_mask_name = input_info[1]["name"]
+                device_attention_mask.copy_(att_mask.to(dtype))
+                context.set_tensor_address(att_mask_name, device_attention_mask.data_ptr())
+                context.set_input_shape(att_mask_name, device_attention_mask.shape)
+            
+            if token_type is not None:
+                token_type_name = input_info[2]["name"]
+                device_token_type.copy_(token_type.to(dtype))
+                context.set_tensor_address(token_type_name, device_token_type.data_ptr())
+                context.set_input_shape(token_type_name, device_token_type.shape)
 
-        input_name = input_info[0]["name"]
-        device_input.copy_(xb.to(dtype))
-        context.set_tensor_address(input_name, device_input.data_ptr())
-        context.set_input_shape(input_name, device_input.shape)
+            output_name = output_info[0]["name"]
+            context.set_tensor_address(output_name, device_output.data_ptr()) 
 
-        if att_mask is not None:
-            att_mask_name = input_info[1]["name"]
-            device_attention_mask.copy_(att_mask.to(dtype))
-            context.set_tensor_address(att_mask_name, device_attention_mask.data_ptr())
-            context.set_input_shape(att_mask_name, device_attention_mask.shape)
-        
-        if token_type is not None:
-            token_type_name = input_info[2]["name"]
-            device_token_type.copy_(token_type.to(dtype))
-            context.set_tensor_address(token_type_name, device_token_type.data_ptr())
-            context.set_input_shape(token_type_name, device_token_type.shape)
+            
+            torch_stream.synchronize()
 
-        output_name = output_info[0]["name"]
-        context.set_tensor_address(output_name, device_output.data_ptr()) 
+            cfx.push()
+            try:
+                with torch.cuda.stream(torch_stream):
+                    context.execute_async_v3(stream_ptr)
+            except Exception as e:
+                print("TensorRT Error:", e)
+            torch_stream.synchronize() 
+            cfx.pop()
+            end_time = time.time()
 
-        
-        torch_stream.synchronize()
+            output = device_output.cpu().numpy()
 
-        start_time_synchronize = time.time()  
-        torch_stream.synchronize()  
 
-        start_time_inteference = time.time() 
-        cfx.push()
-        try:
-            with torch.cuda.stream(torch_stream):
-                context.execute_async_v3(stream_ptr)
-        except Exception as e:
-            print("TensorRT Error:", e)
-        torch_stream.synchronize() 
-        cfx.pop()
-        end_time = time.time()
-
-        output = device_output.cpu().numpy()
-        end_time_datatransfer = time.time() 
-
-        latency = end_time - start_time_inteference  
-        latency_synchronize = end_time - start_time_synchronize  
-        latency_datatransfer = end_time_datatransfer - start_time_datatransfer  
-
-        total_time += latency
-        total_time_synchronize += latency_synchronize
-        total_time_datatransfer += latency_datatransfer
-        iterations += 1
-
-        if accuracy_flag:
-            pred = output.argmax(axis=-1)  # [batch, seq_len]
-            correct = (pred == yb.numpy()).sum()
-            total = np.prod(yb.shape)
-            correct_predictions += correct
-            total_predictions += total
+            if accuracy_flag:
+                pred = output.argmax(axis=-1)  # [batch, seq_len]
+                correct = (pred == yb.numpy()).sum()
+                total = np.prod(yb.shape)
+                correct_predictions += correct
+                total_predictions += total
 
     accuracy = 0
     if accuracy_flag:
         accuracy = correct_predictions / total_predictions if total_predictions > 0 else 0
 
-    average_latency = (total_time / iterations) * 1000  # In Millisekunden
-    average_latency_synchronize = (total_time_synchronize / iterations) * 1000  # In Millisekunden
-    average_latency_datatransfer = (total_time_datatransfer / iterations) * 1000  # In Millisekunden
-
-
-    return average_latency, average_latency_synchronize, average_latency_datatransfer, accuracy
+    return 0, 0, 0, accuracy
 
 
 def start_tegrastats(logfile_path: Path):
@@ -450,3 +429,5 @@ if __name__ == "__main__":
         # Hier kannst du mit Regex oder String-Parsing die Werte rausziehen
         print(logs[-10:])  # letzte 10 Zeilen
     cfx.detach()
+
+    parse_tegrastats_to_json.parse_tegrastats()
