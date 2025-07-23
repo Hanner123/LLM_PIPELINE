@@ -12,7 +12,7 @@ import json
 import torch
 import onnx
 #from transformers import AutoTokenizer, AutoModelForSequenceClassification, Trainer, TrainingArguments
-from pathlib import Path
+
 from torch.utils.data import TensorDataset, DataLoader
 import pycuda.driver as cuda
 cuda.init()
@@ -428,6 +428,15 @@ if __name__ == "__main__":
         logs = f.readlines()
         # Hier kannst du mit Regex oder String-Parsing die Werte rausziehen
         print(logs[-10:])  # letzte 10 Zeilen
+
+    del context
+    del engine
+    del device_input
+    del device_output
+    del device_attention_mask
+    del device_token_type
+    del torch_stream
+
     
     cfx.pop()  # <== explizit den Kontext entfernen!
     cfx.detach()
