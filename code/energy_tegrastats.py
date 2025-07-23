@@ -428,6 +428,8 @@ if __name__ == "__main__":
         logs = f.readlines()
         # Hier kannst du mit Regex oder String-Parsing die Werte rausziehen
         print(logs[-10:])  # letzte 10 Zeilen
+    
+    cfx.pop()  # <== explizit den Kontext entfernen!
     cfx.detach()
 
     parse_tegrastats_to_json.parse_tegrastats()
