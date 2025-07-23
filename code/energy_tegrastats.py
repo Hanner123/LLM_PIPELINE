@@ -395,7 +395,7 @@ if __name__ == "__main__":
     engine, context = build_tensorrt_engine(onnx_model_path, test_loader, 1, input_info)
     device_input, device_output, device_attention_mask, device_token_type, stream_ptr, torch_stream = test_data(context, 1, input_info, output_info)
 
-    tegrastats_log = Path("tegrastats.log")
+    tegrastats_log = Path(__file__).resolve().parent.parent /"energy_metrics"/ "tegrastats.log"
 
     # tegrastats starten
     tegra_proc = start_tegrastats(tegrastats_log)

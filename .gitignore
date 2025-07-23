@@ -9,5 +9,6 @@ venv/
 data/
 models/
 datasets/
+energy_metrics/
 code/gitkey.txt
 /quantized_model_int8.trt

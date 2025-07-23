@@ -5,8 +5,8 @@ def parse_tegrastats(input_log="tegrastats.log", output_json="metrics.json"):
     import json
     from datetime import datetime
     from pathlib import Path
-    input_log = Path(__file__).resolve().parent.parent / "tegrastats.log"
-    output_json = Path(__file__).resolve().parent.parent / "energy_metrics.json"
+    input_log = Path(__file__).resolve().parent.parent /"energy_metrics"/ "tegrastats.log"
+    output_json = Path(__file__).resolve().parent.parent /"energy_metrics"/ "energy_metrics.json"
 
     def parse_tegrastats_line(line):
         try:
