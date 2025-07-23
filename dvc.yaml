@@ -203,4 +203,12 @@ stages:
          x: quantisation_type
          y: value
          cache: false
+  energy_measure:
+    cmd: python code/energy_tegrastats.py
+    deps:
+      - code/energy_tegrastats.py
+      - code/parse_tegrastats_to_json.py
+    outs:
+      - energy_metrics/tegrastats.log
+      - energy_metrics/energy_metrics.json
 

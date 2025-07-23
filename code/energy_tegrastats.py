@@ -298,7 +298,7 @@ def run_inference(context, test_loader, device_input, device_output, device_atte
 
     total_predictions = 0
     correct_predictions = 0
-    for i in range(10):
+    for i in range(2):
         for batch in test_loader: 
             # je nach Aufbau des Modells: mit Attention Mask oder ohne
             if len(batch) == 2:
@@ -423,11 +423,6 @@ if __name__ == "__main__":
     print(f"Inferenz fertig mit accuracy {accuracy:.3f}")
     print(f"tegrastats output wurde in {tegrastats_log} geschrieben.")
 
-    # Optional: Log auslesen und z.B. Energieverbrauch oder Temperatur extrahieren
-    with open(tegrastats_log, 'r') as f:
-        logs = f.readlines()
-        # Hier kannst du mit Regex oder String-Parsing die Werte rausziehen
-        print(logs[-10:])  # letzte 10 Zeilen
 
     del context
     del engine

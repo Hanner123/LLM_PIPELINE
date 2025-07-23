@@ -71,7 +71,7 @@ def parse_tegrastats(input_log="tegrastats.log", output_json="metrics.json"):
     with open(output_json, "w") as f:
         json.dump(parsed_data, f, indent=2)
 
-    print(f"✅ {len(parsed_data)} Zeilen in '{output_json}' gespeichert.")
+    print(f"{len(parsed_data)} Zeilen in '{output_json}' gespeichert.")
 
 if __name__ == "__main__":
     parse_tegrastats()
