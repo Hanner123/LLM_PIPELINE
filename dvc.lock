@@ -451,18 +451,22 @@ stages:
       size: 14565
     - path: code/parse_tegrastats_to_json.py
       hash: md5
-      md5: 120ab3040fe314e7285ff51040d1221f
-      size: 3450
+      md5: e6b2409eba8ce7f2d64fed419a768ddf
+      size: 4191
     outs:
+    - path: energy_metrics/energy_consumption.json
+      hash: md5
+      md5: 890bc0cb8fe5043422b7e87fba72f199
+      size: 4600
     - path: energy_metrics/energy_metrics.json
       hash: md5
-      md5: 8386f7b47a5decf098b606e0773e8bd0
-      size: 10094
+      md5: dc50fa7c52a9b9edd99cd030fdef7912
+      size: 18268
     - path: energy_metrics/ram_metrics.json
       hash: md5
-      md5: 9200b19812cadca344f7891dabd408c6
-      size: 1997
+      md5: 58f09e458f9962657ae073159dcc8e24
+      size: 3612
     - path: energy_metrics/tegrastats.log
       hash: md5
-      md5: d686decc37337d88ed87f7cd90bf1925
-      size: 9458
+      md5: d7b899193fb193b9311a882b23c67e2b
+      size: 17119
