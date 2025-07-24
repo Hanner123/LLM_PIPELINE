@@ -442,3 +442,23 @@ stages:
       hash: md5
       md5: 6bd1cbd7528638ae340688caa45317f8
       size: 1625
+  energy_measure:
+    cmd: python code/energy_tegrastats.py
+    deps:
+    - path: code/energy_tegrastats.py
+      hash: md5
+      md5: 138ab1f71ac03cd5320fc7f7cda8f26f
+      size: 14565
+    - path: code/parse_tegrastats_to_json.py
+      hash: md5
+      md5: bd4871fc649f95b4e5f7c2280517fd84
+      size: 2873
+    outs:
+    - path: energy_metrics/energy_metrics.json
+      hash: md5
+      md5: 5442ec614a56cf49a56bcc9413476f3b
+      size: 15836
+    - path: energy_metrics/tegrastats.log
+      hash: md5
+      md5: dfc340ac938fee2ab16adeb7097148c3
+      size: 14802
