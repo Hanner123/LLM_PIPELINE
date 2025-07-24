@@ -456,13 +456,13 @@ stages:
     outs:
     - path: energy_metrics/energy_metrics.json
       hash: md5
-      md5: 156feef433f31863274ab273c6202a52
-      size: 21621
+      md5: 8386f7b47a5decf098b606e0773e8bd0
+      size: 10094
     - path: energy_metrics/ram_metrics.json
       hash: md5
-      md5: 890be2d024a1d133d9838d29b2315d9a
-      size: 4277
+      md5: 9200b19812cadca344f7891dabd408c6
+      size: 1997
     - path: energy_metrics/tegrastats.log
       hash: md5
-      md5: afc305dda1abba603882047717326ebe
-      size: 20209
+      md5: d686decc37337d88ed87f7cd90bf1925
+      size: 9458
