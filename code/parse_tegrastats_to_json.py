@@ -1,12 +1,13 @@
-
-# Hilfsfunktion zum Parsen einer Zeile
-def parse_tegrastats(input_log="tegrastats.log", output_json="metrics.json"):
+def parse_tegrastats(input_log="tegrastats.log"):
     import re
     import json
     from datetime import datetime
     from pathlib import Path
-    input_log = Path(__file__).resolve().parent.parent /"energy_metrics"/ "tegrastats.log"
-    output_json = Path(__file__).resolve().parent.parent /"energy_metrics"/ "energy_metrics.json"
+
+    base_path = Path(__file__).resolve().parent.parent / "energy_metrics"
+    input_log = base_path / "tegrastats.log"
+    output_json_full = base_path / "energy_metrics.json"
+    output_json_simple = base_path / "ram_metrics.json"
 
     def parse_tegrastats_line(line):
         try:
@@ -15,7 +16,7 @@ def parse_tegrastats(input_log="tegrastats.log", output_json="metrics.json"):
             # Zeitstempel
             ts_match = re.match(r"(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2})", line)
             if not ts_match:
-                return None  # ungültige Zeile
+                return None
             timestamp = datetime.strptime(ts_match.group(1), "%m-%d-%Y %H:%M:%S").isoformat()
             data["timestamp"] = timestamp
 
@@ -37,18 +38,19 @@ def parse_tegrastats(input_log="tegrastats.log", output_json="metrics.json"):
                 cpu_usages = [int(re.search(r"(\d+)%@", core).group(1)) for core in cpu_match.group(1).split(',') if re.search(r"\d+%@\d+", core)]
                 data["cpu"] = cpu_usages
 
-            # GPU-Auslastung (GR3D_FREQ)
+            # GPU-Auslastung
             gr3d_match = re.search(r"GR3D_FREQ (\d+)%", line)
             if gr3d_match:
                 data["gpu_usage"] = int(gr3d_match.group(1))
 
-            # Temperaturen (Beispiel: cpu@43.625C)
+            # Temperaturen
             temps = {}
             for sensor in ["cpu", "gpu", "soc0", "soc1", "soc2", "tj"]:
                 t_match = re.search(rf"{sensor}@([\d\.]+)C", line)
                 if t_match:
                     temps[sensor] = float(t_match.group(1))
-            data["temperature"] = temps
+            if temps:
+                data["temperature"] = temps
 
             # Energieverbrauch
             for name in ["VDD_GPU_SOC", "VDD_CPU_CV", "VIN_SYS_5V0"]:
@@ -60,18 +62,32 @@ def parse_tegrastats(input_log="tegrastats.log", output_json="metrics.json"):
         except Exception as e:
             print(f"Fehler beim Parsen: {e}")
             return None
-        
+
     parsed_data = []
+    simple_data = []
+
     with open(input_log, "r") as f:
         for line in f:
             parsed = parse_tegrastats_line(line)
             if parsed:
                 parsed_data.append(parsed)
+                # extrahiere nur timestamp, ram_used, ram_total
+                if "timestamp" in parsed and "ram_used" in parsed and "ram_total" in parsed:
+                    simple_data.append({
+                        "timestamp": parsed["timestamp"],
+                        "ram_used": parsed["ram_used"],
+                        "ram_total": parsed["ram_total"]
+                    })
 
-    with open(output_json, "w") as f:
+    # Speichern
+    with open(output_json_full, "w") as f:
         json.dump(parsed_data, f, indent=2)
+    print(f"{len(parsed_data)} Einträge in '{output_json_full.name}' gespeichert.")
 
-    print(f"{len(parsed_data)} Zeilen in '{output_json}' gespeichert.")
+    with open(output_json_simple, "w") as f:
+        json.dump(simple_data, f, indent=2)
+    print(f"{len(simple_data)} Einträge in '{output_json_simple.name}' gespeichert (vereinfacht).")
+
 
 if __name__ == "__main__":
     parse_tegrastats()
