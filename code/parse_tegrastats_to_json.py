@@ -8,7 +8,9 @@ def parse_tegrastats(input_log="tegrastats.log"):
     input_log = base_path / "tegrastats.log"
     output_json_full = base_path / "energy_metrics.json"
     output_json_simple = base_path / "ram_metrics.json"
-    output_json_energy = base_path / "energy_consumption.json"  # NEU
+    output_json_simple2 = base_path / "ram_metrics_2.json"
+    output_json_energy = base_path / "energy_consumption.json" 
+    output_json_energy2 = base_path / "energy_consumption_2.json"
 
     def parse_tegrastats_line(line):
         try:
@@ -96,9 +98,13 @@ def parse_tegrastats(input_log="tegrastats.log"):
 
     with open(output_json_simple, "w") as f:
         json.dump(simple_data, f, indent=2)
+    with open(output_json_simple2, "w") as f:
+        json.dump(simple_data, f, indent=2)
     print(f"{len(simple_data)} Einträge in '{output_json_simple.name}' gespeichert (vereinfacht).")
 
     with open(output_json_energy, "w") as f:
+        json.dump(energy_data, f, indent=2)
+    with open(output_json_energy2, "w") as f:
         json.dump(energy_data, f, indent=2)
     print(f"{len(energy_data)} Einträge in '{output_json_energy.name}' gespeichert (Energieverbrauch).")
 
