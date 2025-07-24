@@ -1,0 +1,20 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v4.json",
+  "description": "Line plot of RAM usage over time.",
+  "data": {
+    "values": "<DVC_METRIC_DATA>"
+  },
+  "mark": "bar",
+  "encoding": {
+    "x": {
+      "field": "timestamp",
+      "type": "ordinal",
+      "title": "Timestamp"
+    },
+    "y": {
+      "field": "ram_used",
+      "type": "quantitative",
+      "title": "RAM Used (MB)"
+    }
+  }
+}
