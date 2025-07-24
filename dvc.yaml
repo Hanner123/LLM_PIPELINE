@@ -217,4 +217,9 @@ stages:
           x: timestamp
           y: ram_used
           cache: false
+     -  energy_metrics/energy_consumption.json:
+          template: code/plot_templates/ram_used.json
+          x: timestamp
+          y: value
+          cache: false
 

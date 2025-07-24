@@ -8,6 +8,7 @@ def parse_tegrastats(input_log="tegrastats.log"):
     input_log = base_path / "tegrastats.log"
     output_json_full = base_path / "energy_metrics.json"
     output_json_simple = base_path / "ram_metrics.json"
+    output_json_energy = base_path / "energy_consumption.json"  # NEU
 
     def parse_tegrastats_line(line):
         try:
@@ -52,7 +53,7 @@ def parse_tegrastats(input_log="tegrastats.log"):
             if temps:
                 data["temperature"] = temps
 
-            # Energieverbrauch
+            # Energieverbrauch (Leistung in mW)
             for name in ["VDD_GPU_SOC", "VDD_CPU_CV", "VIN_SYS_5V0"]:
                 match = re.search(rf"{name} (\d+)mW", line)
                 if match:
@@ -65,18 +66,27 @@ def parse_tegrastats(input_log="tegrastats.log"):
 
     parsed_data = []
     simple_data = []
+    energy_data = []
 
     with open(input_log, "r") as f:
         for line in f:
             parsed = parse_tegrastats_line(line)
             if parsed:
                 parsed_data.append(parsed)
-                # extrahiere nur timestamp, ram_used, ram_total
+                # RAM vereinfachte Daten
                 if "timestamp" in parsed and "ram_used" in parsed and "ram_total" in parsed:
                     simple_data.append({
                         "timestamp": parsed["timestamp"],
                         "ram_used": parsed["ram_used"],
                         "ram_total": parsed["ram_total"]
+                    })
+                # Energy-Daten nur wenn alle drei Werte da sind
+                if all(k in parsed for k in ["vdd_gpu_soc", "vdd_cpu_cv", "vin_sys_5v0"]):
+                    energy_data.append({
+                        "timestamp": parsed["timestamp"],
+                        "vdd_gpu_soc": parsed["vdd_gpu_soc"],
+                        "vdd_cpu_cv": parsed["vdd_cpu_cv"],
+                        "vin_sys_5v0": parsed["vin_sys_5v0"]
                     })
 
     # Speichern
@@ -88,7 +98,11 @@ def parse_tegrastats(input_log="tegrastats.log"):
         json.dump(simple_data, f, indent=2)
     print(f"{len(simple_data)} Einträge in '{output_json_simple.name}' gespeichert (vereinfacht).")
 
+    with open(output_json_energy, "w") as f:
+        json.dump(energy_data, f, indent=2)
+    print(f"{len(energy_data)} Einträge in '{output_json_energy.name}' gespeichert (Energieverbrauch).")
+
+
 
 if __name__ == "__main__":
     parse_tegrastats()
-
