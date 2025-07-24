@@ -210,5 +210,10 @@ stages:
       - code/parse_tegrastats_to_json.py
     outs:
       - energy_metrics/tegrastats.log
-      - energy_metrics/energy_metrics.json
+    plots:
+    - energy_metrics/energy_metrics.json:
+      template: plot_templates/ram_used_over_time.json
+      x: timestamp
+      y: ram_used
+      cache: false
 
