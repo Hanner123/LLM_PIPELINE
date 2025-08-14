@@ -106,7 +106,8 @@ def parse_tegrastats(input_log="tegrastats.log"):
         json.dump(energy_data, f, indent=2)
     with open(output_json_energy2, "w") as f:
         json.dump(energy_data, f, indent=2)
-    print(f"{len(energy_data)} Einträge in '{output_json_energy.name}' gespeichert (Energieverbrauch).")
+        
+    print(f"{len(energy_data)} Einträge in '{output_json_energy.name}' gespeichert  (Energieverbrauch).")
 
 
 
