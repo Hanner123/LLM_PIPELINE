@@ -75,6 +75,7 @@ def parse_tegrastats(input_log="tegrastats.log"):
             parsed = parse_tegrastats_line(line)
             if parsed:
                 parsed_data.append(parsed)
+
                 # RAM vereinfachte Daten
                 if "timestamp" in parsed and "ram_used" in parsed and "ram_total" in parsed:
                     simple_data.append({
@@ -82,19 +83,31 @@ def parse_tegrastats(input_log="tegrastats.log"):
                         "ram_used": parsed["ram_used"],
                         "ram_total": parsed["ram_total"]
                     })
-                # Energy-Daten nur wenn alle drei Werte da sind
+
+                # Energy-Daten in einzelne Objekte splitten
                 if all(k in parsed for k in ["vdd_gpu_soc", "vdd_cpu_cv", "vin_sys_5v0"]):
-                    energy_data.append({
-                        "timestamp": parsed["timestamp"],
-                        "vdd_gpu_soc": parsed["vdd_gpu_soc"],
-                        "vdd_cpu_cv": parsed["vdd_cpu_cv"],
-                        "vin_sys_5v0": parsed["vin_sys_5v0"]
-                    })
+                    energy_data.extend([
+                        {
+                            "timestamp": parsed["timestamp"],
+                            "type": "vdd_gpu_soc",
+                            "value": parsed["vdd_gpu_soc"]
+                        },
+                        {
+                            "timestamp": parsed["timestamp"],
+                            "type": "vdd_cpu_cv",
+                            "value": parsed["vdd_cpu_cv"]
+                        },
+                        {
+                            "timestamp": parsed["timestamp"],
+                            "type": "vin_sys_5v0",
+                            "value": parsed["vin_sys_5v0"]
+                        }
+                    ])
 
     # Speichern
     with open(output_json_full, "w") as f:
         json.dump(parsed_data, f, indent=2)
-    print(f"{len(parsed_data)} Einträge in '{output_json_full.name}' gespeichert.")
+    print(f"{len(parsed_data)} Einträge in '{output_json_full.name}' gespeichert .")
 
     with open(output_json_simple, "w") as f:
         json.dump(simple_data, f, indent=2)
